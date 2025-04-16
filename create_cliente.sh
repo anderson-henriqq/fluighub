@@ -1,10 +1,8 @@
-CLIENTE=melo
-RELEASE=release/v2.0
+CLIENTE=fluigsebraern
+RELEASE=main
 
 # Cria branch do cliente baseada em versão
-git checkout -b cliente-$CLIENTE $RELEASE
+git checkout $CLIENTE $RELEASE
 
 # Cria branches de ambiente
-git checkout -b cliente-$CLIENTE-hml
-git checkout cliente-$CLIENTE
-git checkout -b cliente-$CLIENTE-prod
+git checkout $CLIENTE-prod
