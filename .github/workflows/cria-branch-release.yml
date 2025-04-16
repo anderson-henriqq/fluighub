@@ -23,7 +23,7 @@ jobs:
 
       - name: Cria nova branch de release baseada na main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           VERSION=${{ steps.get_tag.outputs.TAG }}
           RELEASE_BRANCH="release/$VERSION"
