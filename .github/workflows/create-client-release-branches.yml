@@ -1,0 +1,54 @@
+name: Criar branches versionadas para clientes
+
+on:
+  workflow_dispatch:  # permite rodar manualmente
+
+jobs:
+  create-client-release-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout completo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # necessário para buscar tags e todas as refs
+
+      - name: Configura Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Obter última tag da main
+        id: get_tag
+        run: |
+          TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          echo "Última TAG encontrada: $TAG"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Encontrar branches de cliente
+        id: find_branches
+        run: |
+          BRANCHES=$(git branch -r | grep -o 'origin/fluighub[^-]*$')
+          echo "Branches de cliente encontradas:"
+          echo "$BRANCHES"
+          echo "branches<<EOF" >> $GITHUB_OUTPUT
+          echo "$BRANCHES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Criar novas branches versionadas para cada cliente
+        env:
+          TAG: ${{ steps.get_tag.outputs.TAG }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          echo "Iniciando criação de branches versionadas com base na main..."
+          git checkout main
+          git pull origin main
+
+          while IFS= read -r CLIENT_BRANCH; do
+            CLIENT_NAME=$(echo "$CLIENT_BRANCH" | sed 's/origin\/fluighub//')
+            NEW_BRANCH="fluighub${CLIENT_NAME}-${TAG}"
+
+            echo "Criando branch $NEW_BRANCH..."
+            git checkout -b "$NEW_BRANCH"
+            git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }} "$NEW_BRANCH"
+          done <<< "${{ steps.find_branches.outputs.branches }}"
