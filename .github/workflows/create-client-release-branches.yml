@@ -23,32 +23,31 @@ jobs:
         run: |
           TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
           echo "Última TAG encontrada: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Encontrar branches de cliente
         id: find_branches
         run: |
-          BRANCHES=$(git branch -r | grep 'origin/fluighub' | grep -v 'prod$')
-          echo "Branches de cliente encontradas:"
-          echo "$BRANCHES"
-          echo "branches<<EOF" >> $GITHUB_OUTPUT
-          echo "$BRANCHES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          git fetch --all
+          git branch -r | grep 'origin/fluighub' | grep -v 'prod$' | sed 's/origin\/fluighub//' > branches.txt
+          echo "Branches encontradas:"
+          cat branches.txt
+          echo "branches=$(cat branches.txt | paste -sd ',' -)" >> $GITHUB_OUTPUT
 
       - name: Criar novas branches versionadas para cada cliente
         env:
-          TAG: ${{ steps.get_tag.outputs.TAG }}
           GH_PAT: ${{ secrets.GH_PAT }}
+          TAG: ${{ env.TAG }}
         run: |
           echo "Iniciando criação de branches versionadas com base na main..."
           git checkout main
           git pull origin main
-
-          while IFS= read -r CLIENT_BRANCH; do
-            CLIENT_NAME=$(echo "$CLIENT_BRANCH" | sed 's/origin\/fluighub//')
-            NEW_BRANCH="fluighub${CLIENT_NAME}-${TAG}"
-
+          
+          IFS=',' read -ra CLIENTS <<< "${{ steps.find_branches.outputs.branches }}"
+          for CLIENT in "${CLIENTS[@]}"; do
+            CLEAN_NAME=$(echo "$CLIENT" | xargs | sed 's/[^a-zA-Z0-9]//g')
+            NEW_BRANCH="fluighub${CLEAN_NAME}-${TAG}"
             echo "Criando branch $NEW_BRANCH..."
-            git checkout -b "$NEW_BRANCH"
+            git checkout -b "$NEW_BRANCH" main
             git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }} "$NEW_BRANCH"
-          done <<< "${{ steps.find_branches.outputs.branches }}"
+          done
