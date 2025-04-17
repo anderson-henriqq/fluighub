@@ -1,0 +1,39 @@
+name: Criar Branches base de Cliente
+
+on:
+  workflow_dispatch:
+    inputs:
+      cliente:
+        description: 'Nome do cliente (ex: sebraern)'
+        required: true
+
+jobs:
+  create-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Definir variáveis e criar branches
+      run: |
+        CLIENTE=${{ github.event.inputs.cliente }}  # Recebe a variável CLIENTE
+        BASE="fluighub"
+        CLIENTE="${BASE}${CLIENTE}"  # Cria o nome da branch do cliente
+        RELEASE="main"
+        
+        echo "Cliente: $CLIENTE"
+        echo "Base: $BASE"
+        echo "Release: $RELEASE"
+
+        # Cria branch do cliente baseada em versão
+        git checkout $RELEASE
+        git pull origin $RELEASE
+        git checkout -b $CLIENTE
+        git push origin $CLIENTE
+
+        # Cria a branch de produção
+        git checkout -b "$CLIENTE-prod"
+        git push origin "$CLIENTE-prod"
+        
+        echo "Branches criadas: $CLIENTE e $CLIENTE-prod"
