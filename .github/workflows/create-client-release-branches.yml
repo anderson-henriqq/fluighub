@@ -23,7 +23,7 @@ jobs:
         run: |
           TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
           echo "Última TAG encontrada: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Encontrar branches de cliente
         id: find_branches
@@ -37,14 +37,12 @@ jobs:
       - name: Criar novas branches versionadas para cada cliente
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+          TAG: ${{ env.TAG }}
         run: |
           echo "Iniciando criação de branches versionadas com base na main..."
           git checkout main
           git pull origin main
           
-          TAG="${{ steps.get_tag.outputs.TAG }}"
-          echo "Usando TAG: $TAG"
-
           IFS=',' read -ra CLIENTS <<< "${{ steps.find_branches.outputs.branches }}"
           for CLIENT in "${CLIENTS[@]}"; do
             CLEAN_NAME=$(echo "$CLIENT" | xargs | sed 's/[^a-zA-Z0-9]//g')
