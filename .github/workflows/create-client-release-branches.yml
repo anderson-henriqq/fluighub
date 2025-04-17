@@ -28,7 +28,7 @@ jobs:
       - name: Encontrar branches de cliente
         id: find_branches
         run: |
-          BRANCHES=$(git branch -r | grep 'origin/fluighub' | grep -v 'prod$)
+          BRANCHES=$(git branch -r | grep 'origin/fluighub' | grep -v 'prod$')
           echo "Branches de cliente encontradas:"
           echo "$BRANCHES"
           echo "branches<<EOF" >> $GITHUB_OUTPUT
