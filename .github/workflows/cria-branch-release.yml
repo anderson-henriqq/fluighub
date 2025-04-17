@@ -3,7 +3,7 @@ name: Criar branch release da main
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened]
+    types: [closed]
     branches:
       - main
 
