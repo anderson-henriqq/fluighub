@@ -26,8 +26,10 @@ jobs:
 
       - name: Copiar .properties da main
         run: |
-          git fetch origin main
-          git checkout origin/main -- configs/${{ github.event.inputs.cliente_id }}.properties
+            mkdir -p src/main/resources/configs
+            git fetch origin main
+            git show origin/main:src/main/resources/configs/${{ github.event.inputs.cliente_id }}.properties > src/main/resources/configs/${{ github.event.inputs.cliente_id }}.properties
+        
 
       - name: Colocar config na pasta correta
         run: |
