@@ -1,0 +1,47 @@
+name: Build FluigHub Cliente
+
+on:
+  workflow_dispatch:
+    inputs:
+      cliente_id:
+        description: 'ID do cliente (ex: sebraeam)'
+        required: true
+      origem_branch:
+        description: 'Branch com o código fonte (ex: fluighubsebraeam-v2.0.0)'
+        required: true
+
+env:
+  destino_branch: ${{ github.event.inputs.client_id }}-prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch de origem
+        uses: actions/checkout@v4
+        with:
+          ref: $destino_branch
+          fetch-depth: 0  # necessário para criar branches depois
+
+      - name: Copiar .properties da main
+        run: |
+          git fetch origin main
+          git checkout origin/main -- configs/${{ github.event.inputs.cliente_id }}.properties
+
+      - name: Colocar config na pasta correta
+        run: |
+          mkdir -p src/main/webapp/resources
+          cp src/main/resources/configs/${{ github.event.inputs.cliente_id }}.properties src/main/webapp/resources/config.properties
+
+      - name: Build com Maven usando profile
+        run: mvn clean install -Pcliente -Dcliente.id=${{ github.event.inputs.cliente_id }}
+
+      - name: Criar branch destino e mover build
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -B ${{ github.event.inputs.destino_branch }}
+          git add .
+          git commit -m "Build automatizado para ${{ github.event.inputs.cliente_id }}"
+          git push origin ${{ github.event.inputs.destino_branch }} --force
