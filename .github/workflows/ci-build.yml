@@ -41,7 +41,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git checkout -B ${{ github.event.inputs.destino_branch }}
+          git checkout -B $destino_branch
           git add .
           git commit -m "Build automatizado para ${{ github.event.inputs.cliente_id }}"
-          git push origin ${{ github.event.inputs.destino_branch }} --force
+          git push origin $destino_branch --force
