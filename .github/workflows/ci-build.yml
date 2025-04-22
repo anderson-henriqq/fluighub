@@ -21,7 +21,7 @@ jobs:
       - name: Checkout branch de origem
         uses: actions/checkout@v4
         with:
-          ref: ${{env.destino_branch}}
+          ref: ${{ github.event.inputs.origem_branch }}
           fetch-depth: 0  # necessário para criar branches depois
 
       - name: Copiar .properties da main
