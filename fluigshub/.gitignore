@@ -1,0 +1,24 @@
+ .project
+*.png
+*.war
+.metadata
+*.cache
+.editorconfig
+prettier.config.js
+.vscode
+.settings
+.idea
+.bkpgit
+.resources
+target/
+sandbox/
+.resources/
+.DS_Store
+.DS_Store?
+fluigshub/target
+**/target
+
+**/node_modules
+./widgets/node_modules
+.vscode/servers.json
+fluigshub/src/main/webapp/resources/api.properties
