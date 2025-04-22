@@ -1,49 +1,55 @@
-name: Build FluigHub Cliente
+name: Deploy Cliente
 
 on:
   workflow_dispatch:
     inputs:
+      base_branch:
+        description: 'Branch base para criar a temporária'
+        required: true
       cliente_id:
-        description: 'ID do cliente (ex: sebraeam)'
+        description: 'ID do cliente (nome do arquivo .properties)'
         required: true
-      origem_branch:
-        description: 'Branch com o código fonte (ex: fluighubsebraeam-v2.0.0)'
+      destino_branch:
+        description: 'Branch final de destino (ex: cliente-prod)'
         required: true
-
-env:
-  destino_branch: ${{ github.event.inputs.cliente_id }}-prod
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout branch de origem
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.origem_branch }}
-          fetch-depth: 0  # necessário para criar branches depois
+    - name: Checar o repositório
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # pega todo o histórico
 
-      - name: Copiar .properties da main
-        run: |
-          git fetch origin main
-          git checkout origin/main -- src/main/resources/configs/${{ github.event.inputs.cliente_id }}.properties
-        
+    - name: Configurar Git
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
 
-      - name: Colocar config na pasta correta
-        run: |
-          mkdir -p src/main/webapp/resources
-          cp src/main/resources/configs/${{ github.event.inputs.cliente_id }}.properties src/main/webapp/resources/config.properties
+    - name: Criar branch temporária
+      run: |
+        git fetch origin ${{ github.event.inputs.base_branch }}
+        git checkout -b temp-${{ github.event.inputs.cliente_id }} origin/${{ github.event.inputs.base_branch }}
 
-      - name: Build com Maven usando profile
-        working-directory: fluighub
-        run: mvn clean install -Pcliente -Dcliente.id=${{ github.event.inputs.cliente_id }}
+    - name: Copiar .properties da main
+      run: |
+        mkdir -p src/main/webapp/resources
+        git fetch origin main
+        git show origin/main:configs/${{ github.event.inputs.cliente_id }}.properties > src/main/webapp/resources/config.properties
 
-      - name: Criar branch destino e mover build
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git checkout -B $destino_branch
-          git add .
-          git commit -m "Build automatizado para ${{ github.event.inputs.cliente_id }}"
-          git push origin ${{env.destino_branch}} --force
+    - name: Fazer commit e push para destino
+      run: |
+        git add src/main/webapp/resources/config.properties
+        git commit -m "Adiciona config.properties do cliente ${{ github.event.inputs.cliente_id }}"
+        git push origin temp-${{ github.event.inputs.cliente_id }}:${{ github.event.inputs.destino_branch }}
+
+    - name: Apagar branch temporária local
+      run: |
+        git checkout ${{ github.event.inputs.destino_branch }}
+        git branch -D temp-${{ github.event.inputs.cliente_id }}
+
+    - name: Apagar branch temporária remota (caso tenha sido criada)
+      run: |
+        git push origin --delete temp-${{ github.event.inputs.cliente_id }} || echo "Branch remota não existia"
