@@ -11,7 +11,7 @@ on:
         required: true
 
 env:
-  destino_branch: ${{ github.event.inputs.client_id }}-prod
+  destino_branch: ${{ github.event.inputs.cliente_id }}-prod
 
 jobs:
   build:
@@ -35,6 +35,7 @@ jobs:
           cp src/main/resources/configs/${{ github.event.inputs.cliente_id }}.properties src/main/webapp/resources/config.properties
 
       - name: Build com Maven usando profile
+        working-directory: fluighub
         run: mvn clean install -Pcliente -Dcliente.id=${{ github.event.inputs.cliente_id }}
 
       - name: Criar branch destino e mover build
