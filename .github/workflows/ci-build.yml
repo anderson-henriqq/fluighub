@@ -10,11 +10,6 @@ on:
         description: 'ID do cliente (nome do arquivo .properties)'
         required: true
       
-
-env:
-  cliente_id: "fluighub${{ github.event.inputs.cliente_ID }}"
-  destino_branch: "$cliente_id-prod"
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -32,20 +27,24 @@ jobs:
 
     - name: Criar branch temporária
       run: |
+        cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
+        destino_branch="${cliente_id}-prod"
         git fetch origin ${{ github.event.inputs.base_branch }}
         git checkout -b temp-$cliente_id origin/${{ github.event.inputs.base_branch }}
 
     - name: Copiar .properties da main
       run: |
-          mkdir -p fluigshub/src/main/webapp/resources
-          git fetch origin main
-          git show origin/main:configs/$cliente_id.properties > fluigshub/src/main/webapp/resources/config.properties
-  
+        cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
+        destino_branch="${cliente_id}-prod"
+        mkdir -p fluigshub/src/main/webapp/resources
+        git fetch origin main
+        git show origin/main:configs/$cliente_id.properties > fluigshub/src/main/webapp/resources/config.properties
+
     - name: Fazer commit e push para destino
       run: |
-          git add fluigshub/src/main/webapp/resources/config.properties
-          git commit -m "Adiciona config.properties do cliente $cliente_id"
-          git push origin temp-$cliente_id:$destino_branch
+        git add fluigshub/src/main/webapp/resources/config.properties
+        git commit -m "Adiciona config.properties do cliente $cliente_id"
+        git push origin temp-$cliente_id:$destino_branch
 
     - name: Apagar branch temporária local
       run: |
@@ -56,8 +55,8 @@ jobs:
       run: |
         git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
 
-    - name: compilar projeto
+    - name: Compilar projeto
       run: |
         git checkout $destino_branch
-        cd fluigshub
-        mvn clena install
+        cd fluighub
+        mvn clean install
