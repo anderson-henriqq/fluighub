@@ -66,5 +66,5 @@ jobs:
         cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
         destino_branch="${cliente_id}-prod"
         git checkout $destino_branch
-        cd fluighub
+        cd fluigshub
         mvn clean install
