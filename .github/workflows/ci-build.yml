@@ -37,15 +37,15 @@ jobs:
 
     - name: Copiar .properties da main
       run: |
-        mkdir -p src/main/webapp/resources
-        git fetch origin main
-        git show origin/main:src/main/resources/configs/$cliente_id.properties > src/main/webapp/resources/config.properties
-
+          mkdir -p src/main/webapp/resources
+          git fetch origin main
+          git show origin/main:configs/$cliente_id.properties > fluighub/src/main/webapp/resources/config.properties
+  
     - name: Fazer commit e push para destino
       run: |
-        git add src/main/webapp/resources/config.properties
-        git commit -m "Adiciona config.properties do cliente $cliente_id"
-        git push origin temp-$cliente_id:$destino_branch
+          git add fluighub/src/main/webapp/resources/config.properties
+          git commit -m "Adiciona config.properties do cliente $cliente_id"
+          git push origin temp-$cliente_id:$destino_branch
 
     - name: Apagar branch temporária local
       run: |
@@ -55,3 +55,9 @@ jobs:
     - name: Apagar branch temporária remota (caso tenha sido criada)
       run: |
         git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
+
+    - name: compilar projeto
+      run: |
+        git checkout destino_branch
+        cd fluighub
+        mvn clena install
