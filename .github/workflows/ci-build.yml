@@ -46,7 +46,7 @@ jobs:
         destino_branch="${cliente_id}-prod"
         git add fluigshub/src/main/webapp/resources/config.properties
         git commit -m "Adiciona config.properties do cliente $cliente_id"
-        git push origin temp-$cliente_id:$destino_branch
+        git push origin temp-$cliente_id:$destino_branch --force
 
     - name: Apagar branch temporária local
       run: |
