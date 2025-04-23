@@ -37,13 +37,13 @@ jobs:
 
     - name: Copiar .properties da main
       run: |
-          mkdir -p src/main/webapp/resources
+          mkdir -p fluigshub/src/main/webapp/resources
           git fetch origin main
-          git show origin/main:configs/$cliente_id.properties > fluighub/src/main/webapp/resources/config.properties
+          git show origin/main:configs/$cliente_id.properties > fluigshub/src/main/webapp/resources/config.properties
   
     - name: Fazer commit e push para destino
       run: |
-          git add fluighub/src/main/webapp/resources/config.properties
+          git add fluigshub/src/main/webapp/resources/config.properties
           git commit -m "Adiciona config.properties do cliente $cliente_id"
           git push origin temp-$cliente_id:$destino_branch
 
