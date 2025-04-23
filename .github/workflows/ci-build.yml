@@ -6,12 +6,14 @@ on:
       base_branch:
         description: 'Branch base para criar a temporária'
         required: true
-      cliente_id:
+      cliente_ID:
         description: 'ID do cliente (nome do arquivo .properties)'
         required: true
-      destino_branch:
-        description: 'Branch final de destino (ex: cliente-prod)'
-        required: true
+      
+
+env:
+  cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
+  destino_branch: $cliente_id-prod
 
 jobs:
   deploy:
@@ -31,25 +33,25 @@ jobs:
     - name: Criar branch temporária
       run: |
         git fetch origin ${{ github.event.inputs.base_branch }}
-        git checkout -b temp-${{ github.event.inputs.cliente_id }} origin/${{ github.event.inputs.base_branch }}
+        git checkout -b temp-$cliente_id origin/${{ github.event.inputs.base_branch }}
 
     - name: Copiar .properties da main
       run: |
         mkdir -p src/main/webapp/resources
         git fetch origin main
-        git show origin/main:configs/${{ github.event.inputs.cliente_id }}.properties > src/main/webapp/resources/config.properties
+        git show origin/main:src/main/resources/configs/$cliente_id.properties > src/main/webapp/resources/config.properties
 
     - name: Fazer commit e push para destino
       run: |
         git add src/main/webapp/resources/config.properties
-        git commit -m "Adiciona config.properties do cliente ${{ github.event.inputs.cliente_id }}"
-        git push origin temp-${{ github.event.inputs.cliente_id }}:${{ github.event.inputs.destino_branch }}
+        git commit -m "Adiciona config.properties do cliente $cliente_id"
+        git push origin temp-$cliente_id:$destino_branch
 
     - name: Apagar branch temporária local
       run: |
-        git checkout ${{ github.event.inputs.destino_branch }}
-        git branch -D temp-${{ github.event.inputs.cliente_id }}
+        git checkout $destino_branch
+        git branch -D temp-$cliente_id
 
     - name: Apagar branch temporária remota (caso tenha sido criada)
       run: |
-        git push origin --delete temp-${{ github.event.inputs.cliente_id }} || echo "Branch remota não existia"
+        git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
