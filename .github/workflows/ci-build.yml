@@ -58,6 +58,6 @@ jobs:
 
     - name: compilar projeto
       run: |
-        git checkout destino_branch
+        git checkout $destino_branch
         cd fluighub
         mvn clena install
