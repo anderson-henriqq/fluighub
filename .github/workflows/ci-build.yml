@@ -12,8 +12,8 @@ on:
       
 
 env:
-  cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
-  destino_branch: $cliente_id-prod
+  cliente_id: "fluighub${{ github.event.inputs.cliente_ID }}"
+  destino_branch: "$cliente_id-prod"
 
 jobs:
   deploy:
