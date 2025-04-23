@@ -42,21 +42,29 @@ jobs:
 
     - name: Fazer commit e push para destino
       run: |
+        cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
+        destino_branch="${cliente_id}-prod"
         git add fluigshub/src/main/webapp/resources/config.properties
         git commit -m "Adiciona config.properties do cliente $cliente_id"
         git push origin temp-$cliente_id:$destino_branch
 
     - name: Apagar branch temporária local
       run: |
+        cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
+        destino_branch="${cliente_id}-prod"
         git checkout $destino_branch
         git branch -D temp-$cliente_id
 
     - name: Apagar branch temporária remota (caso tenha sido criada)
       run: |
+        cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
+        destino_branch="${cliente_id}-prod"
         git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
 
     - name: Compilar projeto
       run: |
+        cliente_id="fluighub${{ github.event.inputs.cliente_ID }}"
+        destino_branch="${cliente_id}-prod"
         git checkout $destino_branch
         cd fluighub
         mvn clean install
