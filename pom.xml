@@ -11,36 +11,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
-    <profiles>
-        <profile>
-            <id>cliente</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.8</version>
-                        <executions>
-                            <execution>
-                                <phase>generate-resources</phase>
-                                <configuration>
-                                    <target>
-                                        <echo message="Copiando configs/${cliente.id}.properties para webapp/resources/config.properties"/>
-                                        <copy file="src/main/resources/configs/${cliente.id}.properties"
-                                              tofile="src/main/webapp/resources/config.properties"/>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
+    
     <dependencies>
         <dependency>
             <groupId>com.sun.mail</groupId>
