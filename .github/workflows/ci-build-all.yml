@@ -1,0 +1,67 @@
+name: Deploy Homolog all
+on:
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: 'Branch base para criar a temporária'
+        required: true
+      cliente_ID:
+        description: 'ID do cliente (nome do arquivo .properties)'
+        required: true
+      
+env:
+  CLIENTES: clienteA clienteB clienteC  # Liste todos os clientes aqui
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Configurar Git
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+
+    - name: Deploy para cada cliente
+      run: |
+        for cliente_id in $CLIENTES; do
+          echo "==== Deploy para $cliente_id ===="
+
+          destino_branch="${cliente_id}-prod"
+
+          # Cria branch temporária
+          git fetch origin main
+          git checkout -b temp-$cliente_id origin/main
+
+          # Copia .properties
+          mkdir -p fluigshub/src/main/webapp/resources
+          git show origin/main:configs/fluighub${cliente_id}.properties > fluigshub/src/main/webapp/resources/config.properties
+
+          # Faz commit e push
+          git add fluigshub/src/main/webapp/resources/config.properties
+          git commit -m "Adiciona config.properties do cliente $cliente_id"
+          git push origin temp-$cliente_id:$destino_branch --force
+
+          # Apaga branch temporária local
+          git checkout $destino_branch
+          git branch -D temp-$cliente_id
+
+          # Apaga branch temporária remota
+          git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
+
+          # Compila projeto
+          cd fluigshub
+          mvn clean install
+          cd ..
+
+          # Envia .war para o servidor
+          WAR_FILE_PATH=fluigshub/target/*.war
+          scp -o StrictHostKeyChecking=no $WAR_FILE_PATH usuario@servidor:/caminho/$cliente_id/
+        done
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
