@@ -30,7 +30,7 @@ jobs:
 
           # Cria branch temporária
           git fetch origin main
-          git checkout -b temp-$cliente_id origin/main
+          git checkout -b temp-${cliente_id} origin/main
 
           # Copia .properties
           mkdir -p fluigshub/src/main/webapp/resources
@@ -39,14 +39,14 @@ jobs:
           # Faz commit e push
           git add fluigshub/src/main/webapp/resources/config.properties
           git commit -m "Adiciona config.properties do cliente $cliente_id"
-          git push origin temp-$cliente_id:$destino_branch --force
+          git push origin temp-${cliente_id}:${destino_branch} --force
 
           # Apaga branch temporária local
           git checkout $destino_branch
-          git branch -D temp-$cliente_id
+          git branch -D temp-${cliente_id}
 
           # Apaga branch temporária remota
-          git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
+          git push origin --delete temp-${cliente_id} || echo "Branch remota não existia"
 
           # Compila projeto
           cd fluigshub
