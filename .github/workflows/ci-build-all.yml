@@ -23,7 +23,7 @@ jobs:
     - name: Deploy para cada cliente
       run: |
         for cliente in $CLIENTES; do
-          echo "==== Deploy para $cliente_id ===="
+          echo "==== Deploy para $cliente ===="
 
           cliente_id="fluighub${cliente}"
           destino_branch="${cliente_id}-prod"
@@ -56,5 +56,5 @@ jobs:
           # Envia .war para o servidor
           #WAR_FILE_PATH=fluigshub/target/*.war
           #scp -o StrictHostKeyChecking=no $WAR_FILE_PATH usuario@servidor:/caminho/$cliente_id/
-        #done
+        done
       
