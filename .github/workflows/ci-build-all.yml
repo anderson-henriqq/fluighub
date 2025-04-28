@@ -1,16 +1,9 @@
 name: Deploy Homolog all
 on:
   workflow_dispatch:
-    inputs:
-      base_branch:
-        description: 'Branch base para criar a temporária'
-        required: true
-      cliente_ID:
-        description: 'ID do cliente (nome do arquivo .properties)'
-        required: true
       
 env:
-  CLIENTES: clienteA clienteB clienteC  # Liste todos os clientes aqui
+  CLIENTES: sebraern sebraeam  # Liste todos os clientes aqui
 
 jobs:
   deploy:
@@ -63,5 +56,4 @@ jobs:
           WAR_FILE_PATH=fluigshub/target/*.war
           scp -o StrictHostKeyChecking=no $WAR_FILE_PATH usuario@servidor:/caminho/$cliente_id/
         done
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      
