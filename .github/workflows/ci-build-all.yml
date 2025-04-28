@@ -22,9 +22,10 @@ jobs:
 
     - name: Deploy para cada cliente
       run: |
-        for cliente_id in $CLIENTES; do
+        for cliente in $CLIENTES; do
           echo "==== Deploy para $cliente_id ===="
 
+          cliente_id="fluighub${cliente}"
           destino_branch="${cliente_id}-prod"
 
           # Cria branch temporária
@@ -33,7 +34,7 @@ jobs:
 
           # Copia .properties
           mkdir -p fluigshub/src/main/webapp/resources
-          git show origin/main:configs/fluighub${cliente_id}.properties > fluigshub/src/main/webapp/resources/config.properties
+          git show origin/main:configs/${cliente_id}.properties > fluigshub/src/main/webapp/resources/config.properties
 
           # Faz commit e push
           git add fluigshub/src/main/webapp/resources/config.properties
@@ -53,7 +54,7 @@ jobs:
           cd ..
 
           # Envia .war para o servidor
-          WAR_FILE_PATH=fluigshub/target/*.war
-          scp -o StrictHostKeyChecking=no $WAR_FILE_PATH usuario@servidor:/caminho/$cliente_id/
-        done
+          #WAR_FILE_PATH=fluigshub/target/*.war
+          #scp -o StrictHostKeyChecking=no $WAR_FILE_PATH usuario@servidor:/caminho/$cliente_id/
+        #done
       
