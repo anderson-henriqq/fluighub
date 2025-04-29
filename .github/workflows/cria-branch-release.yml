@@ -1,4 +1,13 @@
-name: Criar branch release da main
+# Este workflow é acionado manualmente (via workflow_dispatch) ou automaticamente 
+# quando um Pull Request é fechado na branch "main" e foi mesclado com sucesso.
+# Ele executa os seguintes passos:
+# 1. Faz checkout completo do repositório (incluindo tags).
+# 2. Recupera a última tag (versão atual da main).
+# 3. Cria uma nova branch de release chamada "release/{tag}" baseada na main.
+# 4. Faz push dessa nova branch para o repositório remoto.
+# Esse processo automatiza a criação de branches de release após a finalização de PRs na main.
+
+name: Cria branch release da main
 
 on:
   workflow_dispatch:

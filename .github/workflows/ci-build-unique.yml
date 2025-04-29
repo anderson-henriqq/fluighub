@@ -1,0 +1,135 @@
+name: Deploy Homolog Unique 
+on:
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: 'Branch base para criar a temporária'
+        required: true
+      cliente_ID:
+        description: 'ID do cliente (nome do arquivo .properties)'
+        required: true
+
+env:
+  FLUIG_HOST: ${{ secrets.FLUIG_HOST }}
+  FLUIG_PORT: ${{ secrets.FLUIG_PORT }}
+  FLUIG_USER: ${{ secrets.FLUIG_USER }}
+  FLUIG_PASS: ${{ secrets.FLUIG_PASS }}
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:  # <-- define variáveis GLOBAIS aqui
+      cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
+      destino_branch: fluighub${{ github.event.inputs.cliente_ID }}-prod
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # pega todo o histórico
+
+    - name: Configurar Git
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+
+    - name: Criar branch temporária
+      run: |
+        git fetch origin ${{ github.event.inputs.base_branch }}
+        git checkout -b temp-${cliente_id} origin/${{ github.event.inputs.base_branch }}
+
+    - name: Copiar .properties da main
+      run: |
+        mkdir -p fluigshub/src/main/webapp/resources
+        git fetch origin main
+        git show origin/main:configs/$cliente_id.properties > fluigshub/src/main/webapp/resources/config.properties
+
+    - name: Fazer commit e push para destino
+      run: |
+        git add fluigshub/src/main/webapp/resources/config.properties
+        git commit -m "Adiciona config.properties do cliente $cliente_id"
+        git push origin temp-$cliente_id:$destino_branch --force
+
+    - name: Apagar branch temporária local
+      run: |
+        git checkout $destino_branch
+        git branch -D temp-$cliente_id
+
+    - name: Apagar branch temporária remota (caso tenha sido criada)
+      run: |
+        git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
+      
+    - name: Configurar Java 11 (OpenJDK)
+      uses: actions/setup-java@v3
+      with:
+          distribution: 'temurin'
+          java-version: '11'
+
+    - name: Compilar projeto
+      run: |
+        git checkout $destino_branch
+        cd fluigshub
+        mvn clean install
+
+    - name: Upload do artefato
+      uses: actions/upload-artifact@v4
+      with:
+          name: ${cliente_id}-meuapp-war-${{ github.run_number }}
+          path: fluigshub/target/*.war
+
+  
+  login_fluig:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Rodar script de login e salvar cookies
+        env:
+          FLUIG_HOST: ${{ env.FLUIG_HOST }}
+          FLUIG_PORT: ${{ env.FLUIG_PORT }}
+          FLUIG_USER: ${{ env.FLUIG_USER }}
+          FLUIG_PASS: ${{ env.FLUIG_PASS }}
+        run: |
+          python login.py
+
+      - name: Salvar cookies como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cookies
+          path: cookies.json
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: login_fluig   # <-- só roda depois do build
+
+    env:  # <-- define variáveis GLOBAIS aqui
+      cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
+      destino_branch: fluighub${{ github.event.inputs.cliente_ID }}-prod
+
+    steps:
+      - name: Baixar o artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${cliente_id}-meuapp-war-${{ github.run_number }}
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar requests
+        run: pip install -r
+
+      - name: Enviar Widget para o Fluig
+        env:
+          FLUIG_HOST: 'strategiconsultoria176588.fluig.cloudtotvs.com.br'
+          FLUIG_PORT: '2450'
+          FLUIG_USERNAME: 'admin'
+          FLUIG_PASSWORD: 'lcsVHVGR1IGwRQrj'
+        run: |    

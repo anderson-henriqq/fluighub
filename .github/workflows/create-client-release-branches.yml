@@ -1,3 +1,15 @@
+# Este workflow automatiza a criação de novas branches versionadas para clientes com base na branch main.
+# Ele pode ser acionado manualmente via GitHub (workflow_dispatch).
+#
+# Funcionalidade principal:
+# 1. Faz checkout completo do repositório, incluindo todas as branches e tags.
+# 2. Encontra a última tag válida da main (formato vX.Y.Z).
+# 3. Busca todas as branches remotas de clientes que seguem o padrão 'origin/fluighub*', exceto as que terminam em 'prod'.
+# 4. Para cada cliente encontrado, cria uma nova branch no formato "fluighub{cliente}-{tag}",
+#    baseada na branch main e faz push para o repositório remoto.
+#
+# Esse processo padroniza e facilita o versionamento dos ambientes de cliente com base na versão principal da aplicação.
+
 name: Criar branches versionadas para clientes
 
 on:

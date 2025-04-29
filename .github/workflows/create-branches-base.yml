@@ -1,3 +1,15 @@
+# Este workflow é executado manualmente via interface do GitHub (workflow_dispatch) e recebe como input o nome de um cliente.
+#
+# Funcionalidade principal:
+# 1. Recebe o nome de um cliente como input.
+# 2. Cria duas novas branches no repositório com base na branch "main":
+#    - Uma branch base para o cliente no formato: fluighub{cliente}
+#    - Uma branch de produção no formato: fluighub{cliente}-prod
+# 3. Faz push dessas branches para o repositório remoto.
+#
+# Esse processo automatiza a preparação da estrutura de branches para novos clientes,
+# seguindo um padrão de versionamento baseado na branch principal (main).
+
 name: Criar Branches base de Cliente
 
 on:
