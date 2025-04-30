@@ -14,10 +14,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:  # <-- define variáveis GLOBAIS aqui
-      destino_branch: fluighub${{ github.event.inputs.cliente_ID }}-prod
-
     steps:
+    - name: Definir destino_branch
+      run: echo "destino_branch=fluighub${{ github.event.inputs.cliente_ID }}-prod" >> $GITHUB_ENV
+      
     - name: Checar o repositório
       uses: actions/checkout@v4
       with:
@@ -85,7 +85,7 @@ jobs:
 
       - name: Extrair dados do cliente
         run: |
-          echo '${{ secrets.CLIENTES_CREDENTIALS_JSON }}' > clientes.json
+          echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
 
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
@@ -143,7 +143,7 @@ jobs:
 
       - name: Extrair dados do cliente
         run: |
-          echo '${{ secrets.CLIENTES_CREDENTIALS_JSON }}' > clientes.json
+          echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
 
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
