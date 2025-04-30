@@ -138,7 +138,6 @@ jobs:
 
       - name: Instalar requests
         run: pip install -r jobs/requirements.txt
-        run: pip install -r jobs/requirements.txt
 
       - name: Extrair dados do cliente
         run: |
