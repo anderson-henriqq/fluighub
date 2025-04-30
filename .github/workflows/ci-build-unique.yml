@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:  # <-- define variáveis GLOBAIS aqui
-      cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
       destino_branch: fluighub${{ github.event.inputs.cliente_ID }}-prod
 
     steps:
@@ -32,28 +31,28 @@ jobs:
     - name: Criar branch temporária
       run: |
         git fetch origin ${{ github.event.inputs.base_branch }}
-        git checkout -b temp-${cliente_id} origin/${{ github.event.inputs.base_branch }}
+        git checkout -b temp-fluighub${{ github.event.inputs.cliente_ID }} origin/${{ github.event.inputs.base_branch }}
 
     - name: Copiar .properties da main
       run: |
         mkdir -p fluigshub/src/main/webapp/resources
         git fetch origin main
-        git show origin/main:configs/$cliente_id.properties > fluigshub/src/main/webapp/resources/config.properties
+        git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}.properties > fluigshub/src/main/webapp/resources/config.properties
 
     - name: Fazer commit e push para destino
       run: |
         git add fluigshub/src/main/webapp/resources/config.properties
-        git commit -m "Adiciona config.properties do cliente $cliente_id"
-        git push origin temp-$cliente_id:$destino_branch --force
+        git commit -m "Adiciona config.properties do cliente ${{ github.event.inputs.cliente_ID }}"
+        git push origin temp-fluighub${{ github.event.inputs.cliente_ID }}:$destino_branch --force
 
     - name: Apagar branch temporária local
       run: |
         git checkout $destino_branch
-        git branch -D temp-$cliente_id
+        git branch -D temp-fluighub${{ github.event.inputs.cliente_ID }}
 
     - name: Apagar branch temporária remota (caso tenha sido criada)
       run: |
-        git push origin --delete temp-$cliente_id || echo "Branch remota não existia"
+        git push origin --delete temp-fluighub${{ github.event.inputs.cliente_ID }} || echo "Branch remota não existia"
       
     - name: Configurar Java 11 (OpenJDK)
       uses: actions/setup-java@v3
@@ -70,7 +69,7 @@ jobs:
     - name: Upload do artefato
       uses: actions/upload-artifact@v4
       with:
-          name: ${cliente_id}-meuapp-war-${{ github.run_number }}
+          name: fluighub${{ github.event.inputs.cliente_ID }}-meuapp-war-${{ github.run_number }}
           path: fluigshub/target/*.war
 
   
@@ -88,13 +87,13 @@ jobs:
         run: |
           echo '${{ secrets.CLIENTES_CREDENTIALS_JSON }}' > clientes.json
 
-          HOST=$(jq -r --arg id "$cliente_id" '.[$id].host' clientes.json)
-          PORT=$(jq -r --arg id "$cliente_id" '.[$id].port' clientes.json)
-          USERNAME=$(jq -r --arg id "$cliente_id" '.[$id].username' clientes.json)
-          PASSWORD=$(jq -r --arg id "$cliente_id" '.[$id].password' clientes.json)
+          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
+          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
 
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "❌ Cliente inválido ou dados incompletos: $cliente_id"
+            echo "❌ Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
             exit 1
           fi
 
@@ -119,12 +118,12 @@ jobs:
 
     env:  # <-- define variáveis GLOBAIS aqui
       destino_branch: fluighub${{ github.event.inputs.cliente_ID }}-prod
-      cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
+      
     steps:
       - name: Baixar o artifact
         uses: actions/download-artifact@v4
         with:
-          name: fluighub${cliente_id}-meuapp-war-${{ github.run_number }}
+          name: fluighub${{ github.event.inputs.cliente_ID }}-meuapp-war-${{ github.run_number }}
       
       - name: Baixar cookies.json do job anterior
         uses: actions/download-artifact@v3
@@ -146,10 +145,10 @@ jobs:
         run: |
           echo '${{ secrets.CLIENTES_CREDENTIALS_JSON }}' > clientes.json
 
-          HOST=$(jq -r --arg id "$cliente_id" '.[$id].host' clientes.json)
-          PORT=$(jq -r --arg id "$cliente_id" '.[$id].port' clientes.json)
-          USERNAME=$(jq -r --arg id "$cliente_id" '.[$id].username' clientes.json)
-          PASSWORD=$(jq -r --arg id "$cliente_id" '.[$id].password' clientes.json)
+          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
+          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
 
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
             echo "❌ Cliente inválido ou dados incompletos: $cliente_id"
