@@ -9,12 +9,7 @@ on:
         description: 'ID do cliente (nome do arquivo .properties)'
         required: true
 
-env:
-  FLUIG_HOST: ${{ secrets.FLUIG_HOST }}
-  FLUIG_PORT: ${{ secrets.FLUIG_PORT }}
-  FLUIG_USER: ${{ secrets.FLUIG_USER }}
-  FLUIG_PASS: ${{ secrets.FLUIG_PASS }}
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -89,12 +84,26 @@ jobs:
       - name: Instalar dependências
         run: pip install -r requirements.txt
 
+      - name: Extrair dados do cliente
+        run: |
+          echo '${{ secrets.CLIENTES_CREDENTIALS_JSON }}' > clientes.json
+
+          HOST=$(jq -r --arg id "$cliente_id" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "$cliente_id" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "$cliente_id" '.[$id].username' clientes.json)
+          PASSWORD=$(jq -r --arg id "$cliente_id" '.[$id].password' clientes.json)
+
+          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
+            echo "❌ Cliente inválido ou dados incompletos: $cliente_id"
+            exit 1
+          fi
+
+          echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
+          echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
+          echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
+          echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+
       - name: Rodar script de login e salvar cookies
-        env:
-          FLUIG_HOST: ${{ env.FLUIG_HOST }}
-          FLUIG_PORT: ${{ env.FLUIG_PORT }}
-          FLUIG_USER: ${{ env.FLUIG_USER }}
-          FLUIG_PASS: ${{ env.FLUIG_PASS }}
         run: |
           python login.py
 
@@ -109,27 +118,60 @@ jobs:
     needs: login_fluig   # <-- só roda depois do build
 
     env:  # <-- define variáveis GLOBAIS aqui
-      cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
       destino_branch: fluighub${{ github.event.inputs.cliente_ID }}-prod
-
+      cliente_id: fluighub${{ github.event.inputs.cliente_ID }}
     steps:
       - name: Baixar o artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${cliente_id}-meuapp-war-${{ github.run_number }}
+          name: fluighub${cliente_id}-meuapp-war-${{ github.run_number }}
+      
+      - name: Baixar cookies.json do job anterior
+        uses: actions/download-artifact@v3
+        with:
+          name: cookies
 
+      - name: Mover cookies.json para o diretório atual
+        run: mv cookies/cookies.json .
+        
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Instalar requests
-        run: pip install -r
+        run: pip install -r requirements.txt
 
-      - name: Enviar Widget para o Fluig
-        env:
-          FLUIG_HOST: 'strategiconsultoria176588.fluig.cloudtotvs.com.br'
-          FLUIG_PORT: '2450'
-          FLUIG_USERNAME: 'admin'
-          FLUIG_PASSWORD: 'lcsVHVGR1IGwRQrj'
-        run: |    
+      - name: Extrair dados do cliente
+        run: |
+          echo '${{ secrets.CLIENTES_CREDENTIALS_JSON }}' > clientes.json
+
+          HOST=$(jq -r --arg id "$cliente_id" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "$cliente_id" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "$cliente_id" '.[$id].username' clientes.json)
+          PASSWORD=$(jq -r --arg id "$cliente_id" '.[$id].password' clientes.json)
+
+          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
+            echo "❌ Cliente inválido ou dados incompletos: $cliente_id"
+            exit 1
+          fi
+
+          echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
+          echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
+          echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
+          echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+  
+      - name: Descobrir caminho do arquivo WAR
+        id: descobrir_caminho
+        run: |
+          caminho=$(find . -name "*.war" | head -n 1)
+          echo "widget_file_path=$caminho" >> $GITHUB_ENV
+        
+      - name: Rodar upload do widget
+        run: |
+          python upload.py
+      
+      - name: Limpar arquivos temporários
+        if: always()
+        run: |
+          rm -f cookies.json clientes.json

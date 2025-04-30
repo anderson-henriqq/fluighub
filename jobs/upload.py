@@ -47,9 +47,9 @@ if __name__ == "__main__":
     server = {
         'host': os.environ['FLUIG_HOST'],
         'port': os.environ['FLUIG_PORT'],
-        'username': os.environ['FLUIG_USER'],
-        'password': os.environ['FLUIG_PASS']
+        'username': os.environ['FLUIG_USERNAME'],
+        'password': os.environ['FLUIG_PASSWORD']
     }
-    widget_file_path = "/home/andersonhenriq/Documentos/Workspaces/wcm/widget/testando/testando.war"
+    widget_file_path = os.environ['widget_file_path']
 
     UploadService.upload_widget(server, widget_file_path)

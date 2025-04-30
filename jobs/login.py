@@ -40,9 +40,9 @@ class LoginService:
 
 if __name__ == "__main__":
     server = {
-    'host': os.environ['FLUIG_HOST'],
-    'port': os.environ['FLUIG_PORT'],
-    'username': os.environ['FLUIG_USER'],
-    'password': os.environ['FLUIG_PASS']
-}
+        'host': os.environ['FLUIG_HOST'],
+        'port': os.environ['FLUIG_PORT'],
+        'username': os.environ['FLUIG_USERNAME'],
+        'password': os.environ['FLUIG_PASSWORD']
+    }
     LoginService.login_and_get_cookies(server)
