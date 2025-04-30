@@ -129,9 +129,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cookies
-
-      - name: Mover cookies.json para o diretório atual
-        run: mv cookies/cookies.json .
         
       - name: Configurar Python
         uses: actions/setup-python@v5
