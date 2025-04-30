@@ -105,7 +105,7 @@ jobs:
 
       - name: Rodar script de login e salvar cookies
         run: |
-          python login.py
+          python jobs/login.py
 
       - name: Salvar cookies como artifact
         uses: actions/upload-artifact@v4
@@ -169,7 +169,7 @@ jobs:
         
       - name: Rodar upload do widget
         run: |
-          python upload.py
+          python jobs/upload.py
       
       - name: Limpar arquivos temporários
         if: always()
