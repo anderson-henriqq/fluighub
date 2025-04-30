@@ -136,7 +136,7 @@ jobs:
           python-version: '3.10'
 
       - name: Instalar requests
-        run: pip install -r requirements.txt
+        run: pip install -r jobs/requirements.txt
 
       - name: Extrair dados do cliente
         run: |
