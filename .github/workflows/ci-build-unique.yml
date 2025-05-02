@@ -63,7 +63,7 @@ jobs:
     - name: Fazer commit e push para destino
       run: |
         git add fluigshub/src/main/webapp/resources/config.properties
-        git add fluigshub/src/main/webapp/application.info
+        git add fluigshub/src/main/webapp/resources/application.info
         git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
         git push origin temp-fluighub${{ github.event.inputs.cliente_ID }}:$destino_branch --force
 
@@ -92,7 +92,7 @@ jobs:
     - name: Upload do artefato
       uses: actions/upload-artifact@v4
       with:
-          name: fluighub${{ github.event.inputs.cliente_ID }}-${LAST_TAG}-${{ github.run_number }}
+          name: fluighub${{ github.event.inputs.cliente_ID }}-${{ env.LAST_TAG }}-${{ github.run_number }}
           path: fluigshub/target/*.war
 
   
@@ -159,7 +159,7 @@ jobs:
       - name: Baixar o artifact
         uses: actions/download-artifact@v4
         with:
-          name: fluighub${{ github.event.inputs.cliente_ID }}-${LAST_TAG}-${{ github.run_number }}
+          name: fluighub${{ github.event.inputs.cliente_ID }}-${{ env.LAST_TAG }}-${{ github.run_number }}
       
       - name: Baixar cookies.json do job anterior
         uses: actions/download-artifact@v4
