@@ -39,10 +39,32 @@ jobs:
         git fetch origin main
         git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}.properties > fluigshub/src/main/webapp/resources/config.properties
 
+    - name: Criar application.info
+      run: |
+        mkdir -p fluigshub/src/main/webapp
+        git fetch --tags origin main
+        LAST_TAG=$(git tag --sort=-creatordate --merged origin/main | head -n 1)
+        if [ -z "$LAST_TAG" ]; then
+          LAST_TAG="1.0.0"
+        fi
+        echo "$LAST_TAG" > last_tag.txt  # <-- Salva a versão
+        
+        echo "id=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/webapp/application.info
+        echo "name=Fluig Hub Cliente ${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/webapp/application.info
+        echo "version=$LAST_TAG" >> fluigshub/src/main/webapp/application.info
+        cat fluigshub/src/main/webapp/application.info
+    
+    - name: Salvar versão como artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: last_tag
+        path: last_tag.txt
+
     - name: Fazer commit e push para destino
       run: |
         git add fluigshub/src/main/webapp/resources/config.properties
-        git commit -m "Adiciona config.properties do cliente ${{ github.event.inputs.cliente_ID }}"
+        git add fluigshub/src/main/webapp/application.info
+        git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
         git push origin temp-fluighub${{ github.event.inputs.cliente_ID }}:$destino_branch --force
 
     - name: Apagar branch temporária local
@@ -66,10 +88,11 @@ jobs:
         cd fluigshub
         mvn clean install
 
+
     - name: Upload do artefato
       uses: actions/upload-artifact@v4
       with:
-          name: fluighub${{ github.event.inputs.cliente_ID }}-meuapp-war-${{ github.run_number }}
+          name: fluighub${{ github.event.inputs.cliente_ID }}-${LAST_TAG}-${{ github.run_number }}
           path: fluigshub/target/*.war
 
   
@@ -120,11 +143,23 @@ jobs:
 
       - name: Checkout código
         uses: actions/checkout@v4
+
+      - name: Baixar o artifact da versão
+        uses: actions/download-artifact@v4
+        with:
+          name: last_tag
+      
+      - name: Ler versão e definir como variável
+        id: ler_versao
+        run: |
+          LAST_TAG=$(cat last_tag.txt)
+          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
+      
       
       - name: Baixar o artifact
         uses: actions/download-artifact@v4
         with:
-          name: fluighub${{ github.event.inputs.cliente_ID }}-meuapp-war-${{ github.run_number }}
+          name: fluighub${{ github.event.inputs.cliente_ID }}-${LAST_TAG}-${{ github.run_number }}
       
       - name: Baixar cookies.json do job anterior
         uses: actions/download-artifact@v4
