@@ -49,8 +49,8 @@ jobs:
         fi
         echo "$LAST_TAG" > last_tag.txt  # <-- Salva a versão
         
-        echo "id=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/webapp/application.info
-        echo "name=Fluig Hub Cliente ${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/webapp/application.info
+        echo "id=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/webapp/resources/application.info
+        echo "name=Fluig Hub Cliente ${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/webapp/resources/application.info
         echo "version=$LAST_TAG" >> fluigshub/src/main/webapp/application.info
         cat fluigshub/src/main/webapp/application.info
     
