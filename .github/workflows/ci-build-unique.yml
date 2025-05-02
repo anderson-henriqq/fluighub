@@ -198,7 +198,46 @@ jobs:
         run: |
           caminho=$(find . -name "*.war" | head -n 1)
           echo "widget_file_path=$caminho" >> $GITHUB_ENV
-        
+      
+      - name: Inserir application.info no WAR
+        run: |
+          CLIENTE_ID="${{ github.event.inputs.cliente_ID }}"
+          CLIENTE_NAME="fluighub${CLIENTE_ID}"
+
+          # Cria diretório temporário e extrai o .war
+          mkdir -p war_temp
+          cd war_temp
+          jar -xf ../${{ env.widget_file_path }}
+          
+          # Garante que a pasta exista
+          mkdir -p WEB-INF/classes
+
+          # Cria o arquivo application.info
+          cat <<EOF > WEB-INF/classes/application.info
+            application.type=widget
+            application.code=${CLIENTE_NAME}
+            application.title=${CLIENTE_NAME}
+            application.description=testando
+            application.category=SYSTEM
+            application.icon=icon.png
+            application.renderer=freemarker
+            developer.code=FLUIG-VSCODE-EXTENSION
+            developer.name=FLUIG-VSCODE-EXTENSION
+            developer.url=https://github.com/fluiggers/fluig-vscode-extension
+            application.uiwidget=true
+            application.mobileapp=false
+            application.version=${{ env.LAST_TAG }}-${{ github.run_number }}
+            view.file=view.ftl
+            edit.file=edit.ftl
+            locale.file.base.name=testando
+            application.resource.js.1=/resources/js/testando.js
+            application.resource.css.2=/resources/css/testando.css
+            EOF
+
+          # Recompacta o WAR
+          jar -cf ../${{ env.widget_file_path }} *
+
+
       - name: Rodar upload do widget
         run: |
           python jobs/upload.py
