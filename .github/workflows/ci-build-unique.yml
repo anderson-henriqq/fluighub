@@ -48,6 +48,7 @@ jobs:
           LAST_TAG="1.0.0"
         fi
         echo "$LAST_TAG" > last_tag.txt  # <-- Salva a versão
+        echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
         
         echo "id=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/webapp/resources/application.info
         echo "name=Fluig Hub Cliente ${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/webapp/resources/application.info
@@ -154,7 +155,6 @@ jobs:
         run: |
           LAST_TAG=$(cat last_tag.txt)
           echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
-      
       
       - name: Baixar o artifact
         uses: actions/download-artifact@v4
