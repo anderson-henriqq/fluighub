@@ -51,21 +51,21 @@ jobs:
         echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
         
         echo "application.type=widget" > fluigshub/src/main/resources/application.info
-        echo "application.code=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/resources/application.info
-        echo "application.title=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/resources/application.info
-        echo "application.description=testando" > fluigshub/src/main/resources/application.info
-        echo "application.category=SYSTEM" > fluigshub/src/main/resources/application.info
-        echo "application.icon=icon.png" > fluigshub/src/main/resources/application.info
-        echo "application.renderer=freemarker" > fluigshub/src/main/resources/application.info
-        echo "developer.code=FLUIG-VSCODE-EXTENSION" > fluigshub/src/main/resources/application.info
-        echo "developer.name=FLUIG-VSCODE-EXTENSION" > fluigshub/src/main/resources/application.info
-        echo "developer.url=https://github.com/fluiggers/fluig-vscode-extension" > fluigshub/src/main/resources/application.info
-        echo "application.uiwidget=true" > fluigshub/src/main/resources/application.info
-        echo "application.mobileapp=false" > fluigshub/src/main/resources/application.info
-        echo "application.version=${{ env.LAST_TAG }}-${{ github.run_number }}" > fluigshub/src/main/resources/application.info
-        echo "view.file=view.ftl" > fluigshub/src/main/resources/application.info
-        echo "edit.file=edit.ftl" > fluigshub/src/main/resources/application.info
-        echo "locale.file.base.name=fluighub-${{ github.event.inputs.cliente_ID }}"
+        echo "application.code=fluighub-${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
+        echo "application.title=fluighub-${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
+        echo "application.description=testando" >> fluigshub/src/main/resources/application.info
+        echo "application.category=SYSTEM" >> fluigshub/src/main/resources/application.info
+        echo "application.icon=icon.png" >> fluigshub/src/main/resources/application.info
+        echo "application.renderer=freemarker" >> fluigshub/src/main/resources/application.info
+        echo "developer.code=FLUIG-VSCODE-EXTENSION" >> fluigshub/src/main/resources/application.info
+        echo "developer.name=FLUIG-VSCODE-EXTENSION" >> fluigshub/src/main/resources/application.info
+        echo "developer.url=https://github.com/fluiggers/fluig-vscode-extension" >> fluigshub/src/main/resources/application.info
+        echo "application.uiwidget=true" >> fluigshub/src/main/resources/application.info
+        echo "application.mobileapp=false" >> fluigshub/src/main/resources/application.info
+        echo "application.version=${{ env.LAST_TAG }}-${{ github.run_number }}" >> fluigshub/src/main/resources/application.info
+        echo "view.file=view.ftl" >> fluigshub/src/main/resources/application.info
+        echo "edit.file=edit.ftl" >> fluigshub/src/main/resources/application.info
+        echo "locale.file.base.name=fluighub-${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
           
     - name: Salvar versão como artifact
       uses: actions/upload-artifact@v4
