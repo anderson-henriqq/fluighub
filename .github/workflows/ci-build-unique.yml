@@ -41,7 +41,7 @@ jobs:
 
     - name: Criar application.info
       run: |
-        mkdir -p fluigshub/src/main/webapp
+        mkdir -p fluigshub/src/main/resources
         git fetch --tags origin main
         LAST_TAG=$(git tag --sort=-creatordate --merged origin/main | head -n 1)
         if [ -z "$LAST_TAG" ]; then
@@ -50,11 +50,23 @@ jobs:
         echo "$LAST_TAG" > last_tag.txt  # <-- Salva a versão
         echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
         
-        echo "id=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/webapp/resources/application.info
-        echo "name=Fluig Hub Cliente ${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/webapp/resources/application.info
-        echo "version=$LAST_TAG" >> fluigshub/src/main/webapp/application.info
-        cat fluigshub/src/main/webapp/application.info
-    
+        echo "application.type=widget" > fluigshub/src/main/resources/application.info
+        echo "application.code=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/resources/application.info
+        echo "application.title=fluighub-${{ github.event.inputs.cliente_ID }}" > fluigshub/src/main/resources/application.info
+        echo "application.description=testando" > fluigshub/src/main/resources/application.info
+        echo "application.category=SYSTEM" > fluigshub/src/main/resources/application.info
+        echo "application.icon=icon.png" > fluigshub/src/main/resources/application.info
+        echo "application.renderer=freemarker" > fluigshub/src/main/resources/application.info
+        echo "developer.code=FLUIG-VSCODE-EXTENSION" > fluigshub/src/main/resources/application.info
+        echo "developer.name=FLUIG-VSCODE-EXTENSION" > fluigshub/src/main/resources/application.info
+        echo "developer.url=https://github.com/fluiggers/fluig-vscode-extension" > fluigshub/src/main/resources/application.info
+        echo "application.uiwidget=true" > fluigshub/src/main/resources/application.info
+        echo "application.mobileapp=false" > fluigshub/src/main/resources/application.info
+        echo "application.version=${{ env.LAST_TAG }}-${{ github.run_number }}" > fluigshub/src/main/resources/application.info
+        echo "view.file=view.ftl" > fluigshub/src/main/resources/application.info
+        echo "edit.file=edit.ftl" > fluigshub/src/main/resources/application.info
+        echo "locale.file.base.name=fluighub-${{ github.event.inputs.cliente_ID }}"
+          
     - name: Salvar versão como artifact
       uses: actions/upload-artifact@v4
       with:
@@ -64,7 +76,7 @@ jobs:
     - name: Fazer commit e push para destino
       run: |
         git add fluigshub/src/main/webapp/resources/config.properties
-        git add fluigshub/src/main/webapp/resources/application.info
+        git add fluigshub/src/main/resources/application.info
         git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
         git push origin temp-fluighub${{ github.event.inputs.cliente_ID }}:$destino_branch --force
 
@@ -117,7 +129,7 @@ jobs:
           PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
 
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "❌ Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
+            echo "Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
             exit 1
           fi
 
@@ -184,7 +196,7 @@ jobs:
           PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
 
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "❌ Cliente inválido ou dados incompletos: $cliente_id"
+            echo "Cliente inválido ou dados incompletos: $cliente_id"
             exit 1
           fi
 
@@ -199,59 +211,6 @@ jobs:
           caminho=$(find . -name "*.war" | head -n 1)
           echo "widget_file_path=$caminho" >> $GITHUB_ENV
       
-      - name: Inserir application.info no WAR
-        run: |
-            CLIENTE_ID="${{ github.event.inputs.cliente_ID }}"
-            CLIENTE_NAME="fluighub${CLIENTE_ID}"
-        
-            echo "📦 WAR original: ${{ env.widget_file_path }}"
-        
-            # Cria diretório temporário e extrai o .war
-            mkdir -p war_temp
-            cd war_temp
-            jar -xf ../${{ env.widget_file_path }}
-        
-            echo "📂 Conteúdo extraído do WAR:"
-            find . -type f
-        
-            # Garante que a pasta exista
-            mkdir -p WEB-INF/classes
-        
-            # Cria o arquivo application.info
-            cat <<EOF > WEB-INF/classes/application.info
-              application.type=widget
-              application.code=${CLIENTE_NAME}
-              application.title=${CLIENTE_NAME}
-              application.description=testando
-              application.category=SYSTEM
-              application.icon=icon.png
-              application.renderer=freemarker
-              developer.code=FLUIG-VSCODE-EXTENSION
-              developer.name=FLUIG-VSCODE-EXTENSION
-              developer.url=https://github.com/fluiggers/fluig-vscode-extension
-              application.uiwidget=true
-              application.mobileapp=false
-              application.version=${{ env.LAST_TAG }}-${{ github.run_number }}
-              view.file=view.ftl
-              edit.file=edit.ftl
-              locale.file.base.name=testando
-              application.resource.js.1=/resources/js/testando.js
-              application.resource.css.2=/resources/css/testando.css
-              EOF
-        
-            echo "Arquivo application.info criado em: war_temp/WEB-INF/classes/"
-            echo "Conteúdo do application.info:"
-            cat WEB-INF/classes/application.info
-        
-            echo "📂 Estrutura final da pasta antes de recompactar:"
-            find . -type f
-          
-            # Recompacta o WAR
-            jar -cf ../${{ env.widget_file_path }} *
-            echo "WAR recompresso com sucesso: ../${{ env.widget_file_path }}"
-        
-
-
       - name: Rodar upload do widget
         run: |
           python jobs/upload.py
