@@ -28,7 +28,7 @@ jobs:
     - name: Criar branch temporária
       run: |
         git fetch origin ${{ github.event.inputs.base_branch }}
-        git checkout -b fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} origin/${{ github.event.inputs.base_branch }}
+        git checkout -b fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} origin/${{ github.event.inputs.base_branch }}
 
     - name: Copiar .properties da main
       run: |
@@ -75,7 +75,7 @@ jobs:
         git add fluigshub/src/main/webapp/resources/config.properties
         git add fluigshub/src/main/resources/application.info
         git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
-        git push origin fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
+        git push origin fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
   
     - name: Configurar Java 11 (OpenJDK)
       uses: actions/setup-java@v3
@@ -85,7 +85,7 @@ jobs:
 
     - name: Compilar projeto
       run: |
-        git checkout fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}
+        git checkout fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}
         cd fluigshub
         mvn clean install
 
@@ -202,6 +202,33 @@ jobs:
       - name: Rodar upload do widget
         run: |
           python jobs/upload.py
+      
+      - name: Renomeia branch se base_branch for main
+        if: ${{ github.event.inputs.base_branch == 'main' }}
+        run: |
+          echo "Base branch é main. Iniciando processo de renomeação da branch..."
+      
+          # Define nomes
+          OLD_BRANCH="fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}"
+          NEW_BRANCH="fluighub-${{ github.event.inputs.cliente_ID }}/release/${{ env.LAST_TAG }}"
+      
+          echo "Antiga branch: $OLD_BRANCH"
+          echo "Nova branch: $NEW_BRANCH"
+      
+          # Troca para a branch antiga (precisa existir localmente)
+          git fetch origin $OLD_BRANCH
+          git checkout -b "$OLD_BRANCH" origin/$OLD_BRANCH
+      
+          # Renomeia localmente
+          git branch -m "$NEW_BRANCH"
+      
+          # Push da nova branch para o remoto
+          git push origin "$NEW_BRANCH"
+      
+          # (Opcional) Apaga a branch antiga do remoto
+          # git push origin --delete "$OLD_BRANCH"
+      
+          echo "Branch renomeada e enviada com sucesso."
       
       - name: Limpar arquivos temporários
         if: always()
