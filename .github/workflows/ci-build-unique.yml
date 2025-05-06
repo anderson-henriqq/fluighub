@@ -8,7 +8,7 @@ on:
         type: choice
         options:
           - main
-          - release/v3.0
+          - release/v3.0.0
       cliente_ID:
         description: 'ID do cliente (nome do arquivo .properties)'
         required: true
