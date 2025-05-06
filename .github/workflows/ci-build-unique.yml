@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Definir destino_branch
-      run: echo "destino_branch=fluighub${{ github.event.inputs.cliente_ID }}-prod" >> $GITHUB_ENV
-      
     - name: Checar o repositório
       uses: actions/checkout@v4
       with:
@@ -31,7 +28,7 @@ jobs:
     - name: Criar branch temporária
       run: |
         git fetch origin ${{ github.event.inputs.base_branch }}
-        git checkout -b temp-fluighub${{ github.event.inputs.cliente_ID }} origin/${{ github.event.inputs.base_branch }}
+        git checkout -b fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} origin/${{ github.event.inputs.base_branch }}
 
     - name: Copiar .properties da main
       run: |
@@ -78,17 +75,8 @@ jobs:
         git add fluigshub/src/main/webapp/resources/config.properties
         git add fluigshub/src/main/resources/application.info
         git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
-        git push origin temp-fluighub${{ github.event.inputs.cliente_ID }}:$destino_branch --force
-
-    - name: Apagar branch temporária local
-      run: |
-        git checkout $destino_branch
-        git branch -D temp-fluighub${{ github.event.inputs.cliente_ID }}
-
-    - name: Apagar branch temporária remota (caso tenha sido criada)
-      run: |
-        git push origin --delete temp-fluighub${{ github.event.inputs.cliente_ID }} || echo "Branch remota não existia"
-      
+        git push origin fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
+  
     - name: Configurar Java 11 (OpenJDK)
       uses: actions/setup-java@v3
       with:
@@ -97,7 +85,7 @@ jobs:
 
     - name: Compilar projeto
       run: |
-        git checkout $destino_branch
+        git checkout fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}
         cd fluigshub
         mvn clean install
 
