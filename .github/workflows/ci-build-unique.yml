@@ -5,10 +5,19 @@ on:
       base_branch:
         description: 'Branch base para criar a temporária'
         required: true
+        type: choice
+        options:
+          - main
+          - release/v3.0
       cliente_ID:
         description: 'ID do cliente (nome do arquivo .properties)'
         required: true
-
+        type: choice
+        options:
+          - sebreaam
+          - sebraern
+          - doisa
+          - strategi
 
 jobs:
   build:
