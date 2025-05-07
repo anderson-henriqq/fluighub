@@ -2,6 +2,13 @@ name: Deploy Homolog Unique
 on:
   workflow_dispatch:
     inputs:
+      servidor:
+        description:
+        required: true 
+        type: choice
+        options:
+          - homologação
+          - produção
       base_branch:
         description: 'Branch base para criar a temporária'
         required: true
@@ -18,7 +25,7 @@ on:
           - sebraern
           - doisa
           - strategi
-
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -118,7 +125,12 @@ jobs:
 
       - name: Extrair dados do cliente
         run: |
-          echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
+          if [ "${{ github.event.inputs.servidor }}" = "homologação" ]; then
+            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
+          else
+            echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
+          fi
+            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
 
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
@@ -185,8 +197,9 @@ jobs:
 
       - name: Extrair dados do cliente
         run: |
+          
           echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-
+          echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
           USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
