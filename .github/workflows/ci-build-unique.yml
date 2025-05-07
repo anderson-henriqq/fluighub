@@ -45,7 +45,6 @@ jobs:
           else
             echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
           fi
-            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
 
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
@@ -96,8 +95,12 @@ jobs:
       run: |
         mkdir -p fluigshub/src/main/webapp/resources
         git fetch origin main
-        git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}.properties > fluigshub/src/main/webapp/resources/config.properties
-
+        if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+          git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-hml.properties > fluigshub/src/main/webapp/resources/config.properties
+        else
+          git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-prod.properties > fluigshub/src/main/webapp/resources/config.properties
+        fi
+        
     - name: Criar application.info
       run: |
         mkdir -p fluigshub/src/main/resources
