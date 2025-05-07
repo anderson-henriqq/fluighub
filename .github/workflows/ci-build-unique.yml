@@ -2,7 +2,7 @@ name: Deploy Homolog Unique
 on:
   workflow_dispatch:
     inputs:
-      servidor:
+      server:
         description:
         required: true 
         type: choice
@@ -25,11 +25,57 @@ on:
           - sebraern
           - doisa
           - strategi
+          - elastri
       
 jobs:
+
+  login_fluig:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: pip install -r jobs/requirements.txt
+
+      - name: Extrair dados do cliente
+        run: |
+          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
+          else
+            echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
+          fi
+            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
+
+          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
+          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
+
+          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
+            echo "Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
+            exit 1
+          fi
+
+          echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
+          echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
+          echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
+          echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+
+      - name: Rodar script de login e salvar cookies
+        run: |
+          python jobs/login.py
+
+      - name: Salvar cookies como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cookies
+          path: cookies.json
+
+  
   build:
     runs-on: ubuntu-latest
-
+    needs: login_fluig
     steps:
     - name: Checar o repositório
       uses: actions/checkout@v4
@@ -112,54 +158,9 @@ jobs:
           name: fluighub${{ github.event.inputs.cliente_ID }}-${{ env.LAST_TAG }}-${{ github.run_number }}
           path: fluigshub/target/*.war
 
-  
-  login_fluig:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-
-      - name: Instalar dependências
-        run: pip install -r jobs/requirements.txt
-
-      - name: Extrair dados do cliente
-        run: |
-          if [ "${{ github.event.inputs.servidor }}" = "homologação" ]; then
-            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-          else
-            echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
-          fi
-            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-
-          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
-          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
-          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
-          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
-
-          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
-            exit 1
-          fi
-
-          echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
-          echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
-          echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
-          echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
-
-      - name: Rodar script de login e salvar cookies
-        run: |
-          python jobs/login.py
-
-      - name: Salvar cookies como artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cookies
-          path: cookies.json
-
   deploy:
     runs-on: ubuntu-latest
-    needs: login_fluig   # <-- só roda depois do login
+    needs: build   # <-- só roda depois do login
       
     steps:
 
