@@ -1,5 +1,124 @@
 # Documentação da Pipeline de CI/CD - API Java para Fluig
 
+## Como adicionar as Secrets no repositório
+
+Para que o processo de CI/CD funcione corretamente, você precisa cadastrar três variáveis **secretas** no repositório GitHub. Essas secrets são usadas para acessar os servidores de homologação/produção e para permitir que o GitHub manipule o repositório (push automático de builds, por exemplo).
+
+---
+
+### Secrets obrigatórias
+
+| Nome da Secret           | Descrição                                                                 |
+|--------------------------|---------------------------------------------------------------------------|
+| `SERVIDORES_HOMOLOG_JSON`| Credenciais dos servidores de **homologação**                             |
+| `SERVIDORES_PROD_JSON`   | Credenciais dos servidores de **produção**                                |
+| `GH_PATH`                | Token de autenticação pessoal do GitHub (Personal Access Token - PAT)     |
+
+---
+
+### Formato esperado das credenciais (SERVIDORES_...)
+
+Todas as duas variáveis (`SERVIDORES_HOMOLOG_JSON` e `SERVIDORES_PROD_JSON`) devem conter um JSON válido **em linha única**:
+
+```json
+{"strategi":{"host":"strategiconsultoria176588.fluig.cloudtotvs.com.br","port":"2450","username":"admin","password":"lcsVHVGR1IGwRQrj"},"sebraern":{"host":"fluighml.rn.sebrae.com.br","port":"443","username":"anderson.santos","password":"123456"}}
+```
+
+> 📝 *Certifique-se de que o JSON seja colado como uma única linha, sem quebras.*
+
+---
+
+### Como gerar o `GH_PATH` (Personal Access Token)
+
+1. Acesse seu [perfil do GitHub](https://github.com/settings/tokens).
+2. Vá em **Developer settings** > **Personal access tokens** > **Tokens (classic)**.
+3. Clique em **Generate new token (classic)**.
+4. Configure o token:
+   - **Note**: `fluighub-token` (ou outro nome identificável)
+   - **Expiration**: escolha um tempo ou deixe padrão
+   - **Scopes**: selecione:
+     - `repo` (acesso total ao repositório)
+     - `workflow` (acesso à execução e leitura de workflows)
+5. Clique em **Generate token**.
+6. Copie o token gerado **imediatamente** (ele não será mostrado novamente).
+
+---
+
+### Como adicionar as secrets no repositório
+
+1. Acesse seu repositório no GitHub.
+2. Vá até **Settings** > **Secrets and variables** > **Actions**.
+3. Clique em **New repository secret** para cada variável:
+   - `SERVIDORES_HOMOLOG_JSON`
+   - `SERVIDORES_PROD_JSON`
+   - `GH_PATH`
+4. Preencha o **Name** com o nome da variável e o **Value** com o conteúdo apropriado.
+5. Clique em **Add secret**.
+
+## Como Adicionar um Novo Cliente
+
+Para adicionar um novo cliente ao projeto, siga os passos abaixo:
+
+1. **Criar os arquivos `.properties` de configuração**  
+   Crie dois arquivos no formato `.properties`, um para o ambiente de homologação e outro para o ambiente de produção.  
+   A convenção de nomenclatura deve seguir este padrão:
+
+   ```
+   fluighub{cliente_ID}-{ambiente}.properties
+   ```
+
+   - Use `hml` para o ambiente de homologação.
+   - Use `prod` para o ambiente de produção.
+
+   **Exemplo:**
+   - `fluighubsebraern-hml.properties`
+   - `fluighubsebraern-prod.properties`
+
+2. **Adicionar as credenciais do cliente nas variáveis secretas do repositório**
+
+   - Edite o conteúdo da variável `SERVIDORES_HOMOLOG_JSON` no repositório e adicione as credenciais de **homologação** do novo cliente, seguindo o formato:
+
+     ```json
+     {"cliente_id":{"host":"host_do_servidor","port":"porta","username":"usuario","password":"senha"}}
+     ```
+
+   - Faça o mesmo com a variável `SERVIDORES_PROD_JSON`, adicionando as credenciais de **produção** do cliente.
+
+   As variáveis devem conter **um único JSON válido em uma única linha**, sem formatação ou identação.
+
+   **Exemplo com dois clientes:**
+
+   ```json
+   {"strategi":{"host":"strategiconsultoria176588.fluig.cloudtotvs.com.br","port":"2450","username":"admin","password":"lcsVHVGR1IGwRQrj"},"sebraern":{"host":"fluighml.rn.sebrae.com.br","port":"443","username":"anderson.santos","password":"123456"}}
+   ```
+
+3. **Adicionar o cliente no workflow do GitHub Actions**
+
+   - Abra o arquivo `.github/workflows/ci-build-unique.yml`
+   - No campo `inputs > cliente_ID > options`, adicione o ID do novo cliente como opção
+
+     ```yaml
+     cliente_ID:
+      description: 'ID do cliente (mesmo cliente_ID usado para criar o .properties)'
+      required: true
+      type: choice
+      options:
+        - sebreaam
+        - sebraern
+        - doisa
+        - strategi
+        - elastri
+        - novocliente  # Adicione essa linha com o novo cliente
+     ```
+
+   **Exemplo com dois clientes:**
+
+   ```json
+   {"strategi":{"host":"strategiconsultoria176588.fluig.cloudtotvs.com.br","port":"2450","username":"admin","password":"lcsVHVGR1IGwRQrj"},"sebraern":{"host":"fluighml.rn.sebrae.com.br","port":"443","username":"anderson.santos","password":"123456"}}
+   ```
+
+> ⚠️ Certifique-se de manter o conteúdo das variáveis em formato JSON válido. Cada cliente deve ter uma chave com seu ID e o objeto contendo as credenciais.
+
 ## Análise do Código e Estrutura de Diretórios
 
 ### Arquivos Essenciais da Pipeline
@@ -34,7 +153,7 @@ Ambas devem seguir o seguinte padrão de conteúdo, inserido como **string JSON 
 ### Arquivos de Configuração
 
 - **Arquivos `.properties`** devem seguir a convenção:  
-  `fluighub{cliente_ID}-{ambiente}.properties`  
+  `fluighub{cliente_ID}-{ambiente(hml ou prod}.properties`  
   Exemplo: `fluighubsebraern-hml.properties`
 
 - **application.info** é recriado dinamicamente com base no cliente e versão da tag.
@@ -187,8 +306,20 @@ datasetId=dsFormEduEmpreendedoraIntermediario
 ```properties
 application.type=widget
 application.code=fluighub-sebraern
-application.version=3.0.0-42
 application.title=fluighub-sebraern
+application.description=testando
+application.category=SYSTEM
+application.icon=icon.png
+application.renderer=freemarker
+developer.code=FLUIG-VSCODE-EXTENSION
+developer.name=FLUIG-VSCODE-EXTENSION
+developer.url=https://github.com/fluiggers/fluig-vscode-extension
+application.uiwidget=true
+application.mobileapp=false
+application.version=3.0.0-42
+view.file=view.ftl
+edit.file=edit.ftl
+locale.file.base.name=fluighub-sebraern
 ```
 
 ---
