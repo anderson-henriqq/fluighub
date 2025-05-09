@@ -1,8 +1,8 @@
 # Documentação da Pipeline de CI/CD - API Java para Fluig
 
 ## 📚 Sumário
-- [Resumo](#Resumo)
-- [Como Adicionar um Novo Cliente](Como-Adicionar-um-Novo-Cliente)
+- [Resumo](#resumo)
+- [Como Adicionar um Novo Cliente](#como-adicionar-um-novo-cliente)
 - [🔐 Como adicionar as Secrets no repositório](#como-adicionar-as-secrets-no-repositório)
   - [🔑 Secrets obrigatórias](#secrets-obrigatórias)
   - [🧾 Formato esperado das credenciais](#formato-esperado-das-credenciais)
