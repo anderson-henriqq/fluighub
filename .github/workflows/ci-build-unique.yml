@@ -2,22 +2,80 @@ name: Deploy Homolog Unique
 on:
   workflow_dispatch:
     inputs:
+      server:
+        description:
+        required: true 
+        type: choice
+        options:
+          - homologação
+          - produção
       base_branch:
         description: 'Branch base para criar a temporária'
         required: true
+        type: choice
+        options:
+          - main
+          - release/v3.0.0
       cliente_ID:
         description: 'ID do cliente (nome do arquivo .properties)'
         required: true
-
-
+        type: choice
+        options:
+          - sebreaam
+          - sebraern
+          - doisa
+          - strategi
+          - elastri
+      
 jobs:
+
+  login_fluig:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: pip install -r jobs/requirements.txt
+
+      - name: Extrair dados do cliente
+        run: |
+          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
+          else
+            echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
+          fi
+
+          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
+          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
+
+          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
+            echo "Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
+            exit 1
+          fi
+
+          echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
+          echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
+          echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
+          echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+
+      - name: Rodar script de login e salvar cookies
+        run: |
+          python jobs/login.py
+
+      - name: Salvar cookies como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cookies
+          path: cookies.json
+
+  
   build:
     runs-on: ubuntu-latest
-
+    needs: login_fluig
     steps:
-    - name: Definir destino_branch
-      run: echo "destino_branch=fluighub${{ github.event.inputs.cliente_ID }}-prod" >> $GITHUB_ENV
-      
     - name: Checar o repositório
       uses: actions/checkout@v4
       with:
@@ -31,14 +89,18 @@ jobs:
     - name: Criar branch temporária
       run: |
         git fetch origin ${{ github.event.inputs.base_branch }}
-        git checkout -b temp-fluighub${{ github.event.inputs.cliente_ID }} origin/${{ github.event.inputs.base_branch }}
+        git checkout -b fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} origin/${{ github.event.inputs.base_branch }}
 
     - name: Copiar .properties da main
       run: |
         mkdir -p fluigshub/src/main/webapp/resources
         git fetch origin main
-        git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}.properties > fluigshub/src/main/webapp/resources/config.properties
-
+        if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+          git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-hml.properties > fluigshub/src/main/webapp/resources/config.properties
+        else
+          git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-prod.properties > fluigshub/src/main/webapp/resources/config.properties
+        fi
+        
     - name: Criar application.info
       run: |
         mkdir -p fluigshub/src/main/resources
@@ -78,17 +140,8 @@ jobs:
         git add fluigshub/src/main/webapp/resources/config.properties
         git add fluigshub/src/main/resources/application.info
         git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
-        git push origin temp-fluighub${{ github.event.inputs.cliente_ID }}:$destino_branch --force
-
-    - name: Apagar branch temporária local
-      run: |
-        git checkout $destino_branch
-        git branch -D temp-fluighub${{ github.event.inputs.cliente_ID }}
-
-    - name: Apagar branch temporária remota (caso tenha sido criada)
-      run: |
-        git push origin --delete temp-fluighub${{ github.event.inputs.cliente_ID }} || echo "Branch remota não existia"
-      
+        git push origin fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
+  
     - name: Configurar Java 11 (OpenJDK)
       uses: actions/setup-java@v3
       with:
@@ -97,7 +150,7 @@ jobs:
 
     - name: Compilar projeto
       run: |
-        git checkout $destino_branch
+        git checkout fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}
         cd fluigshub
         mvn clean install
 
@@ -108,49 +161,9 @@ jobs:
           name: fluighub${{ github.event.inputs.cliente_ID }}-${{ env.LAST_TAG }}-${{ github.run_number }}
           path: fluigshub/target/*.war
 
-  
-  login_fluig:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-
-      - name: Instalar dependências
-        run: pip install -r jobs/requirements.txt
-
-      - name: Extrair dados do cliente
-        run: |
-          echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-
-          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
-          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
-          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
-          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
-
-          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
-            exit 1
-          fi
-
-          echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
-          echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
-          echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
-          echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
-
-      - name: Rodar script de login e salvar cookies
-        run: |
-          python jobs/login.py
-
-      - name: Salvar cookies como artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cookies
-          path: cookies.json
-
   deploy:
     runs-on: ubuntu-latest
-    needs: login_fluig   # <-- só roda depois do login
+    needs: build   # <-- só roda depois do login
       
     steps:
 
@@ -188,8 +201,9 @@ jobs:
 
       - name: Extrair dados do cliente
         run: |
+          
           echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-
+          echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
           USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
@@ -214,6 +228,33 @@ jobs:
       - name: Rodar upload do widget
         run: |
           python jobs/upload.py
+      
+      - name: Renomeia branch se base_branch for main
+        if: ${{ github.event.inputs.base_branch == 'main' }}
+        run: |
+          echo "Base branch é main. Iniciando processo de renomeação da branch..."
+      
+          # Define nomes
+          OLD_BRANCH="fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}"
+          NEW_BRANCH="fluighub-${{ github.event.inputs.cliente_ID }}/release/${{ env.LAST_TAG }}"
+      
+          echo "Antiga branch: $OLD_BRANCH"
+          echo "Nova branch: $NEW_BRANCH"
+      
+          # Troca para a branch antiga (precisa existir localmente)
+          git fetch origin $OLD_BRANCH
+          git checkout -b "$OLD_BRANCH" origin/$OLD_BRANCH
+      
+          # Renomeia localmente
+          git branch -m "$NEW_BRANCH"
+      
+          # Push da nova branch para o remoto
+          git push origin "$NEW_BRANCH"
+      
+          # (Opcional) Apaga a branch antiga do remoto
+          # git push origin --delete "$OLD_BRANCH"
+      
+          echo "Branch renomeada e enviada com sucesso."
       
       - name: Limpar arquivos temporários
         if: always()
