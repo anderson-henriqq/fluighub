@@ -1,112 +1,198 @@
+# Documentação da Pipeline de CI/CD - API Java para Fluig
 
-# GitHub Actions - Deploy Homolog Unique
+## Análise do Código e Estrutura de Diretórios
 
-## Descrição
+### Arquivos Essenciais da Pipeline
 
-Este repositório contém o workflow de deploy de um widget do Fluig no ambiente de homologação de clientes específicos.
-
-O processo automatizado realiza as seguintes etapas:
-
-- Criação de branch temporária com arquivos `.properties` e `application.info` do cliente;
-- Compilação do projeto Java, gerando o arquivo `.war`;
-- Autenticação no servidor Fluig do cliente;
-- Upload do `.war` para o Fluig.
-
----
-
-## Estrutura do Repositório
-
-- `configs/`: Contém arquivos `.properties` de configuração de cada cliente. Se for necessário alterar algum data set, insira as alterações no arquivo do cliente correspondente nesta pasta.
-- `job/`: Contém os scripts Python `login.py` e `upload.py` responsáveis por autenticar e realizar o upload para o Fluig.
+| Arquivo/Localização | Propósito |
+|---------------------|-----------|
+| `.github/workflows/deploy-homolog-unique.yml` | Workflow GitHub Actions que automatiza as etapas de login, build e deploy no Fluig. |
+| `jobs/login.py` | Script Python para login no servidor Fluig e geração de cookies de sessão. |
+| `jobs/requirements.txt` | Lista de dependências Python (como `requests`, `jq`, etc.). |
+| `configs/fluighub{cliente}-hml.properties` e `configs/fluighub{cliente}-prod.properties` | Arquivos de configuração por cliente e ambiente. |
+| `fluigshub/src/main/resources/application.info` | Define metadados da aplicação a ser publicada no Fluig. |
+| `fluigshub/target/*.war` | Artefato final do build gerado pelo Maven. |
+| `.github/workflows/cria-branch-release.yml` | Workflow GitHub Actions que automatiza a criação de branches de release a partir da main, usando a última tag como versão. É acionado manualmente ou ao mesclar um PR na main |
 
 ---
 
-## Variáveis de Ambiente
+## Formato, Convenção de Nomeação e Variaveis
 
-### `SERVIDORES_HOMOLOG_JSON`
+### Variáveis Secretas do Repositório
 
-JSON com os dados de todos os clientes, incluindo host, port, username e password. Deve seguir o seguinte formato:
+Para o correto funcionamento do projeto, é necessário configurar duas variáveis secretas no repositório:
+
+- `**SERVIDORES_HOMOLOG_JSON**`: Contém as credenciais de acesso aos servidores de **homologação**.
+- `**SERVIDORES_PROD_JSON**`: Contém as credenciais de acesso aos servidores de **produção**.
+
+Ambas devem seguir o seguinte padrão de conteúdo, inserido como **string JSON em uma única linha, sem identação**:
+
+```json
+{"strategi":{"host":"strategiconsultoria176588.fluig.cloudtotvs.com.br","port":"2450","username":"admin","password":"lcsVHVGR1IGwRQrj"},"sebraern":{"host":"fluighml.rn.sebrae.com.br","port":"443","username":"anderson.santos","password":"123456"}}
+
+```
+### Arquivos de Configuração
+
+- **Arquivos `.properties`** devem seguir a convenção:  
+  `fluighub{cliente_ID}-{ambiente}.properties`  
+  Exemplo: `fluighubsebraern-hml.properties`
+
+- **application.info** é recriado dinamicamente com base no cliente e versão da tag.
+
+### Variáveis de Ambiente e Branches
+
+- **Variáveis esperadas**:  
+  - `FLUIG_HOST`, `FLUIG_PORT`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`
+  - `LAST_TAG`: versão da aplicação baseada na última tag Git.
+
+- **Branches**:
+  - O workflow cria uma branch temporária baseada na opção `base_branch`.
+  - Nome da branch segue o padrão: `fluighub-{cliente_ID}/{base_branch}`
+
+---
+
+## Etapas da Pipeline
+
+### 1. `login_fluig`
+- **Objetivo**: Realiza login no servidor Fluig e salva cookies.
+- **Ferramentas usadas**: Python (`login.py`), `jq`, variáveis secretas do GitHub.
+
+### 2. `build`
+- **Objetivo**: Compilar a aplicação com Maven e gerar o artefato `.war`.
+- **Etapas**:
+  - Criação da branch temporária.
+  - Cópia do `.properties` correspondente.
+  - Geração do `application.info`.
+  - Compilação com `mvn clean install`.
+- **Ferramentas usadas**: Maven, Java 11 (Temurin).
+
+### 3. `deploy`
+- **Objetivo**: Envia o `.war` gerado para o servidor Fluig.
+- **Etapas**:
+  - Leitura da versão.
+  - Download dos artefatos (`.war` e cookies).
+  - Envio via script Python (presumidamente `upload.py` ou via REST no `login.py`).
+
+---
+
+## Integração com o Servidor Fluig
+
+
+
+### Modo de Publicação
+
+- **Via HTTP/REST**, utilizando cookies obtidos no login e parâmetros como:
+  - `FLUIG_HOST`, `FLUIG_PORT`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`
+- Os dados vêm de JSONs secretos no GitHub: `SERVIDORES_HOMOLOG_JSON`, `SERVIDORES_PROD_JSON`.
+
+### Parâmetros de Configuração
 
 ```json
 {
-  "strategi": {
-    "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
-    "port": "2450",
-    "username": "admin",
-    "password": "lcsVHVGR1IGwRQrj"
-  },
   "sebraern": {
-    "host": "fluighml.rn.sebrae.com.br",
-    "port": "443",
-    "username": "anderson.santos",
-    "password": "123456"
+    "host": "fluig.sebraern.org.br",
+    "port": "8080",
+    "username": "admin",
+    "password": "senha123"
   }
 }
 ```
 
 ---
 
-## Disparo Manual
+## Exemplo de Execução/Configuração
 
-Este workflow é iniciado manualmente (`workflow_dispatch`) com os seguintes parâmetros:
+### Inputs da Pipeline
 
-- `base_branch` (string): branch base para criação da branch temporária;
-- `cliente_ID` (string): ID do cliente, usado para localizar o arquivo `.properties` e acessar os dados de login.
+```yaml
+name: Deploy Homolog Unique
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        type: choice
+        options: [homologação, produção]
+      base_branch:
+        type: choice
+        options: [main, release/v3.0.0,...]
+      cliente_ID:
+        type: choice
+        options: [sebreaam, sebraern, doisa, strategi, elastri]
+```
+
+### Exemplo `.properties` (fluighubsebraern-hml.properties)
+
+```properties
+SCHEME=https
+DOMAIN=fluig.rn.sebrae.com.br
+CONSUMER_KEY=acessoPublico
+CONSUMER_SECRET=acessoPublicSecret
+ACCESS_TOKEN=2e8ff776-a9ee-4b71-ba4c-c071b5aa5f40
+TOKEN_SECRET=293c350a-0564-430c-9895-d7057406e8cc201a9425-2c0e-49f5-ab93-da300b62de57
+COMPANY=1
+INITIAL_MINUTES=10
+TOTAL_MINUTES=10
+USER_FLUIG=acessoPublico
+PASS_FLUIG=?T_Q-5Z#T2Zwf_KBDF9*
+WSDL_URL=https://fluig.rn.sebrae.com.br/webdesk/ECMDocumentService?wsdl
+#Serviços disponíveis
+service.allow=sebraern
+#Endpoints API
+endpoint.dataset=true
+endpoint.token=true
+endpoint.zipfiles=true
+endpoint.crypto=true
+endpoint.folder=true
+endpoint.qrcode=true
+endpoint.htmltopdf=true
+endpoint.mergepdf=true
+endpoint.process=true
+#Datasets
+datasets=fluighubsebraern
+datasets.permitidos=datasetId=dsDadosFiscaisDecriptacao, \
+datasetId=dsDadosFiscaisEnviaEmailIdentificador, \
+datasetId=dsConsultaEventoHub, \
+datasetId=dsAprovacaoNotasFiscais, \
+datasetId=dsformEditalTerroir, \
+datasetId=dsEditalTerroirAtualizarMoverSolicitacao, \
+datasetId=dsConsultaNumSeqMvto, \
+datasetId=dsConsultaFuncionarioIntermediario, \
+datasetId=dsConsultaContratoIntermediario, \
+datasetId=dsConsultaFornecedorIntermediario, \
+datasetId=dsConsultaDataLimiteRecebimento, \
+datasetId=dsPagamentoPixGerarQrCodeChave, \
+datasetId=dsConsultaFornecedorPgtoIntermediario, \
+datasetId=dsWorkflowProcessInstanceId, \
+datasetId=dsFormSolicitacaoServicoTerceirizadoIntermediario, \
+datasetId=dsCadastroFornecedorConsultaNumDoc, \
+datasetId=dsPagamentoWebhook, \
+datasetId=dsformInternoEditalTerroirPeriodoExposicao, \
+datasetId=dsRecebimentoNfV2VerificaSolicitacaoExistente, \
+datasetId=dsPagamentoPixGerarQrCodeChave, \
+datasetId=dsEditalFiartIntermediario, \
+datasetId=dsFormEditalRodadaNegociosIntermediario, \
+datasetId=dsSGSCategoriaMotorizacao, \
+datasetId=dsSolicitarCarroCalculaDistancia, \
+datasetId=dsSolicitarCarroModelosDeCarros, \
+datasetId=dsSolicitarViagemVerificaSaldoCDC, \
+datasetId=dsFormEduEmpreendedoraIntermediario, \
+datasetId=dsGetStateName, \
+datasetId=dsMoverSolicitacaoByClass, \
+datasetId=dsFormEduEmpreendedoraIntermediario
+
+```
+
+### Exemplo application.info (gerado dinamicamente)
+
+```properties
+application.type=widget
+application.code=fluighub-sebraern
+application.version=3.0.0-42
+application.title=fluighub-sebraern
+```
 
 ---
 
-## Jobs
+## ✅ Conclusão
 
-### 1. build
-
-**Objetivo:** Preparar a aplicação com as configurações do cliente e compilar o projeto Java.
-
-**Etapas:**
-
-- Define `destino_branch` como `fluighub[cliente_ID]-prod`;
-- Faz checkout do repositório e configura Git;
-- Cria uma branch temporária baseada na `base_branch`;
-- Copia o `.properties` do cliente da branch main;
-- Cria o `application.info` com dados personalizados;
-- Salva a versão (`LAST_TAG`) como artefato;
-- Comita e faz push da branch temporária;
-- Compila o projeto com Maven e gera o `.war`;
-- Faz upload do `.war` como artefato.
-
-### 2. login_fluig
-
-**Objetivo:** Autenticar no servidor Fluig do cliente.
-
-**Etapas:**
-
-- Faz checkout do repositório;
-- Instala dependências Python;
-- Extrai credenciais do cliente de `SERVIDORES_HOMOLOG_JSON`;
-- Executa `jobs/login.py` para gerar `cookies.json`;
-- Salva `cookies.json` como artefato.
-
-### 3. deploy
-
-**Objetivo:** Realizar o upload do `.war` para o Fluig.
-
-**Etapas:**
-
-- Faz checkout do repositório;
-- Baixa os artefatos: `last_tag.txt`, `.war`, e `cookies.json`;
-- Lê a versão do widget;
-- Instala dependências Python;
-- Executa `jobs/upload.py` para subir o `.war`.
-
----
-
-## Artefatos
-
-- `last_tag.txt`: versão usada no nome do artefato final;
-- `fluighub[cliente_ID]-[LAST_TAG]-[run_number]`: arquivo `.war` compilado;
-- `cookies.json`: sessão autenticada no Fluig.
-
----
-
-## Licença
-
-Este projeto é de uso interno.
+Esta pipeline automatiza a entrega contínua de widgets Fluig, garantindo controle de versão, configuração por cliente, e segurança via cookies e secrets do GitHub. A modularização do login, build e deploy permite reutilização e manutenção facilitada.
