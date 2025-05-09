@@ -1,5 +1,21 @@
 # Documentação da Pipeline de CI/CD - API Java para Fluig
 
+## 📚 Sumário
+- [Resumo](#Resumo)
+- [Como Adicionar um Novo Cliente](Como-Adicionar-um-Novo-Cliente)
+- [🔐 Como adicionar as Secrets no repositório](#como-adicionar-as-secrets-no-repositório)
+  - [🔑 Secrets obrigatórias](#secrets-obrigatórias)
+  - [🧾 Formato esperado das credenciais](#formato-esperado-das-credenciais)
+- [📦 Estrutura de Pastas](#estrutura-de-pastas)
+- [🚀 Executando o CI/CD](#executando-o-cicd)
+  - [📥 Pipeline de build](#pipeline-de-build)
+  - [🧪 Pipeline de testes](#pipeline-de-testes)
+  - [📤 Pipeline de deploy](#pipeline-de-deploy)
+
+## Resumo
+
+O pipeline Deploy Homolog Unique é um fluxo de trabalho do GitHub Actions projetado para automatizar o processo de login no Fluig, criação de branch, build e deploy de widgets personalizados para clientes, com base em inputs fornecidos manualmente. Ele é acionado via `workflow_dispatch` e exige três informações: o ambiente de destino (`homologação` ou `produção`), a branch base (`main` ou `release/v3.0.0`) e o identificador do cliente (ex: `sebreaam`, `doisa`). O processo começa com o job `login_fluig`, que faz checkout do repositório, instala dependências Python, extrai dados sensíveis do cliente via jq a partir de segredos codificados e executa um script que faz login na plataforma Fluig, salvando os cookies como artefato. Em seguida, o job `build` cria uma branch temporária baseada nos inputs, copia o arquivo `.properties` correspondente ao ambiente, gera o `application.info` com metadados como código do app, versão e visual, faz commit dessas alterações e compila o projeto Java com Maven, salvando o artefato `.war` para uso posterior. Por fim, o job `deploy` recupera os artefatos, lê a versão gerada, reconstrói os dados de conexão do cliente, localiza o `.war` e executa o script `upload.py` para publicar o widget no Fluig. Caso a branch base seja `main`, o processo inclui ainda a renomeação da branch para refletir a nova versão com padrão `release/<versão>`. Esse pipeline garante um deploy organizado, rastreável e customizado para múltiplos clientes e ambientes.
+
 ## Como adicionar as Secrets no repositório
 
 Para que o processo de CI/CD funcione corretamente, você precisa cadastrar três variáveis **secretas** no repositório GitHub. Essas secrets são usadas para acessar os servidores de homologação/produção e para permitir que o GitHub manipule o repositório (push automático de builds, por exemplo).
