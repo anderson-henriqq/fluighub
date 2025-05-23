@@ -45,7 +45,7 @@ jobs:
           else
             echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
           fi
-
+          cat cliente.json
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
           USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
