@@ -48,22 +48,23 @@ jobs:
 
       - name: Extrair dados do cliente diretamente da secret
         shell: bash
+        env:
+          JSON_HOMOLOG: ${{ secrets.SERVIDORES_HOMOLOG_JSON }}
+          JSON_PROD: ${{ secrets.SERVIDORES_PROD_JSON }}
         run: |
           CLIENT_ID="${{ github.event.inputs.cliente_ID }}"
 
           if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
-            JSON='${{ secrets.SERVIDORES_HOMOLOG_JSON }}'
+            echo "$JSON_HOMOLOG" > clientes.json
           else
-            JSON='${{ secrets.SERVIDORES_PROD_JSON }}'
+            echo "$JSON_PROD" > clientes.json
           fi
 
-          # Extrair os dados usando jq com a chave dinâmica
-          HOST=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].host')
-          PORT=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].port')
-          USERNAME=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].username')
-          PASSWORD=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].password')
+          HOST=$(jq -r --arg id "$CLIENT_ID" '.[$id].host' clientes.json)
+          PORT=$(jq -r --arg id "$CLIENT_ID" '.[$id].port' clientes.json)
+          USERNAME=$(jq -r --arg id "$CLIENT_ID" '.[$id].username')
+          PASSWORD=$(jq -r --arg id "$CLIENT_ID" '.[$id].password')
 
-          # Verificar se algum valor retornou null
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
             echo "❌ Cliente inválido ou dados incompletos: $CLIENT_ID"
             exit 1
@@ -75,15 +76,15 @@ jobs:
           echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
           echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
 
-            - name: Rodar script de login e salvar cookies
-              run: |
-                python jobs/login.py
+      - name: Rodar script de login e salvar cookies
+        run: |
+          python jobs/login.py
 
-            - name: Salvar cookies como artifact
-              uses: actions/upload-artifact@v4
-              with:
-                name: cookies
-                path: cookies.json
+      - name: Salvar cookies como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cookies
+          path: cookies.json
 
   build:
     runs-on: ubuntu-latest
