@@ -1,0 +1,16 @@
+application.type=widget
+application.code=fluighub
+application.title=fluighub
+application.description=testando
+application.category=SYSTEM
+application.icon=icon.png
+application.renderer=freemarker
+developer.code=FLUIG-VSCODE-EXTENSION
+developer.name=FLUIG-VSCODE-EXTENSION
+developer.url=https://github.com/fluiggers/fluig-vscode-extension
+application.uiwidget=true
+application.mobileapp=false
+application.version=-35
+view.file=view.ftl
+edit.file=edit.ftl
+locale.file.base.name=fluighubstrategi
