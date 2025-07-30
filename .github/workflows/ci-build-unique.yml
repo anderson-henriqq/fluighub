@@ -51,11 +51,8 @@ jobs:
         run: |
           
           CLIENT_ID="${{ github.event.inputs.cliente_ID }}"
-          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
-            JSON="${{ secrets.SERVIDORES_HOMOLOG_JSON }}"
-          else
-            JSON="${{ secrets.SERVIDORES_PROD_JSON }}"
-          fi
+          JSON="${{ secrets.SERVIDORES_HOMOLOG_JSON }}"
+          
           
           HOST=$(jq -r --arg id "$CLIENT_ID" '.[$id].host' <<< "$JSON")
           PORT=$(jq -r --arg id "$CLIENT_ID" '.[$id].port' <<< "$JSON")
