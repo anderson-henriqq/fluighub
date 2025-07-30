@@ -1,34 +1,42 @@
-name: Deploy Homolog Unique 
+name: Deploy Homolog Unique
 on:
   workflow_dispatch:
     inputs:
       server:
         description:
-        required: true 
+        required: true
         type: choice
         options:
           - homologação
           - produção
       base_branch:
-        description: 'Branch base para criar a temporária'
+        description: "Branch base para criar a temporária"
         required: true
         type: choice
         options:
           - main
-          - release/v3.0.0
       cliente_ID:
-        description: 'ID do cliente (nome do arquivo .properties)'
+        description: "ID do cliente (nome do arquivo .properties)"
         required: true
         type: choice
         options:
-          - sebreaam
-          - sebraern
+          - agroneli
+          - azevedosetravassos
+          - bn
+          - bsm
+          - concrejato
           - doisa
-          - strategi
           - elastri
-      
-jobs:
+          - geleng
+          - motric
+          - rdg
+          - sebreaam
+          - sebraepb
+          - sebraern
+          - senac
+          - strategi
 
+jobs:
   login_fluig:
     runs-on: ubuntu-latest
     steps:
@@ -38,24 +46,23 @@ jobs:
       - name: Instalar dependências
         run: pip install -r jobs/requirements.txt
 
-      - name: Extrair dados do cliente
+      - name: Extrair dados do cliente diretamente da secret
+        shell: bash
         run: |
-          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
-            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-          else
-            echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
-          fi
-          cat clientes.json
-          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
-          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
-          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
-          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
-
-          if [ "$HOST" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "Cliente inválido ou dados incompletos: ${{ github.event.inputs.cliente_ID }}"
+          CLIENT_ID="${{ github.event.inputs.cliente_ID }}"
+          JSON='${{ secrets.SERVIDORES_HOMOLOG_JSON }}'
+      
+          HOST=$(jq -r --arg id "$CLIENT_ID" '.[$id].host' <<< "$JSON")
+          PORT=$(jq -r --arg id "$CLIENT_ID" '.[$id].port' <<< "$JSON")
+          USERNAME=$(jq -r --arg id "$CLIENT_ID" '.[$id].username' <<< "$JSON")
+          PASSWORD=$(jq -r --arg id "$CLIENT_ID" '.[$id].password' <<< "$JSON")
+      
+          if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
+            echo "❌ Cliente inválido ou dados incompletos: $CLIENT_ID"
             exit 1
           fi
-
+      
+          echo "✅ Dados do cliente carregados"
           echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
           echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
           echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
@@ -71,102 +78,102 @@ jobs:
           name: cookies
           path: cookies.json
 
-  
   build:
     runs-on: ubuntu-latest
     needs: login_fluig
     steps:
-    - name: Checar o repositório
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # pega todo o histórico
+      - name: Checar o repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # pega todo o histórico
 
-    - name: Configurar Git
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
+      - name: Configurar Git
+        env: 
+          GH_PATH: ${{ secrets.GH_PATH}}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${GH_PATH}@github.com/StrategiConsultoria/fluighub.git
 
-    - name: Criar branch temporária
-      run: |
-        git fetch origin ${{ github.event.inputs.base_branch }}
-        git checkout -b fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} origin/${{ github.event.inputs.base_branch }}
+      - name: Criar branch temporária
+        run: |
+          git fetch origin ${{ github.event.inputs.base_branch }}
+          git checkout -b fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} origin/${{ github.event.inputs.base_branch }}
 
-    - name: Copiar .properties da main
-      run: |
-        mkdir -p fluigshub/src/main/webapp/resources
-        git fetch origin main
-        if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
-          git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-hml.properties > fluigshub/src/main/webapp/resources/config.properties
-        else
-          git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-prod.properties > fluigshub/src/main/webapp/resources/config.properties
-        fi
-        
-    - name: Criar application.info
-      run: |
-        mkdir -p fluigshub/src/main/resources
-        git fetch --tags origin main
-        LAST_TAG=$(git tag --sort=-creatordate --merged origin/main | head -n 1)
-        if [ -z "$LAST_TAG" ]; then
-          LAST_TAG="1.0.0"
-        fi
-        echo "$LAST_TAG" > last_tag.txt  # <-- Salva a versão
-        echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
-        
-        echo "application.type=widget" > fluigshub/src/main/resources/application.info
-        echo "application.code=fluighub-${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
-        echo "application.title=fluighub-${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
-        echo "application.description=testando" >> fluigshub/src/main/resources/application.info
-        echo "application.category=SYSTEM" >> fluigshub/src/main/resources/application.info
-        echo "application.icon=icon.png" >> fluigshub/src/main/resources/application.info
-        echo "application.renderer=freemarker" >> fluigshub/src/main/resources/application.info
-        echo "developer.code=FLUIG-VSCODE-EXTENSION" >> fluigshub/src/main/resources/application.info
-        echo "developer.name=FLUIG-VSCODE-EXTENSION" >> fluigshub/src/main/resources/application.info
-        echo "developer.url=https://github.com/fluiggers/fluig-vscode-extension" >> fluigshub/src/main/resources/application.info
-        echo "application.uiwidget=true" >> fluigshub/src/main/resources/application.info
-        echo "application.mobileapp=false" >> fluigshub/src/main/resources/application.info
-        echo "application.version=${{ env.LAST_TAG }}-${{ github.run_number }}" >> fluigshub/src/main/resources/application.info
-        echo "view.file=view.ftl" >> fluigshub/src/main/resources/application.info
-        echo "edit.file=edit.ftl" >> fluigshub/src/main/resources/application.info
-        echo "locale.file.base.name=fluighub-${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
-          
-    - name: Salvar versão como artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: last_tag
-        path: last_tag.txt
+      - name: Copiar .properties da main
+        run: |
+          mkdir -p fluigshub/src/main/webapp/resources
+          git fetch origin main
+          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+            git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-hml.properties > fluigshub/src/main/webapp/resources/config.properties
+          else
+            git show origin/main:configs/fluighub${{ github.event.inputs.cliente_ID }}-prod.properties > fluigshub/src/main/webapp/resources/config.properties
+          fi
 
-    - name: Fazer commit e push para destino
-      run: |
-        git add fluigshub/src/main/webapp/resources/config.properties
-        git add fluigshub/src/main/resources/application.info
-        git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
-        git push origin fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
-  
-    - name: Configurar Java 11 (OpenJDK)
-      uses: actions/setup-java@v3
-      with:
-          distribution: 'temurin'
-          java-version: '11'
+      - name: Criar application.info
+        run: |
+          mkdir -p fluigshub/src/main/resources
+          git fetch --tags origin main
+          LAST_TAG=$(git tag --sort=-creatordate --merged origin/main | head -n 1)
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="1.0.0"
+          fi
+          echo "$LAST_TAG" > last_tag.txt  # <-- Salva a versão
+          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
 
-    - name: Compilar projeto
-      run: |
-        git checkout fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}
-        cd fluigshub
-        mvn clean install
+          echo "application.type=widget" > fluigshub/src/main/resources/application.info
+          echo "application.code=fluighub" >> fluigshub/src/main/resources/application.info
+          echo "application.title=fluighub" >> fluigshub/src/main/resources/application.info
+          echo "application.description=testando" >> fluigshub/src/main/resources/application.info
+          echo "application.category=SYSTEM" >> fluigshub/src/main/resources/application.info
+          echo "application.icon=icon.png" >> fluigshub/src/main/resources/application.info
+          echo "application.renderer=freemarker" >> fluigshub/src/main/resources/application.info
+          echo "developer.code=FLUIG-VSCODE-EXTENSION" >> fluigshub/src/main/resources/application.info
+          echo "developer.name=FLUIG-VSCODE-EXTENSION" >> fluigshub/src/main/resources/application.info
+          echo "developer.url=https://github.com/fluiggers/fluig-vscode-extension" >> fluigshub/src/main/resources/application.info
+          echo "application.uiwidget=true" >> fluigshub/src/main/resources/application.info
+          echo "application.mobileapp=false" >> fluigshub/src/main/resources/application.info
+          echo "application.version=${{ env.LAST_TAG }}-${{ github.run_number }}" >> fluigshub/src/main/resources/application.info
+          echo "view.file=view.ftl" >> fluigshub/src/main/resources/application.info
+          echo "edit.file=edit.ftl" >> fluigshub/src/main/resources/application.info
+          echo "locale.file.base.name=fluighub${{ github.event.inputs.cliente_ID }}" >> fluigshub/src/main/resources/application.info
 
+      - name: Salvar versão como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: last_tag
+          path: last_tag.txt
 
-    - name: Upload do artefato
-      uses: actions/upload-artifact@v4
-      with:
+      - name: Fazer commit e push para destino
+        run: |
+          git add fluigshub/src/main/webapp/resources/config.properties
+          git add fluigshub/src/main/resources/application.info
+          git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
+          git push origin fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
+
+      - name: Configurar Java 11 (OpenJDK)
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "11"
+
+      - name: Compilar projeto
+        run: |
+          git checkout fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}
+          cd fluigshub
+          mvn clean install
+
+      - name: Upload do artefato
+        uses: actions/upload-artifact@v4
+        with:
           name: fluighub${{ github.event.inputs.cliente_ID }}-${{ env.LAST_TAG }}-${{ github.run_number }}
           path: fluigshub/target/*.war
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build   # <-- só roda depois do login
-      
-    steps:
+    needs: build # <-- só roda depois do login
 
+    steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
@@ -174,47 +181,47 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: last_tag
-      
+
       - name: Ler versão e definir como variável
         id: ler_versao
         run: |
           LAST_TAG=$(cat last_tag.txt)
           echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
-      
+
       - name: Baixar o artifact
         uses: actions/download-artifact@v4
         with:
           name: fluighub${{ github.event.inputs.cliente_ID }}-${{ env.LAST_TAG }}-${{ github.run_number }}
-      
+
       - name: Baixar cookies.json do job anterior
         uses: actions/download-artifact@v4
         with:
           name: cookies
-        
+
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Instalar requests
         run: pip install -r jobs/requirements.txt
 
       - name: Extrair dados do cliente
         run: |
-          
+
           if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
             echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
           else
             echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
           fi
-          
+
           HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
           PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
           USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
           PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
 
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "Cliente inválido ou dados incompletos:  ${{ github.event.inputs.cliente_ID }}"
+            echo "Cliente inválido ou dados incompletos: $cliente_id"
             exit 1
           fi
 
@@ -222,44 +229,44 @@ jobs:
           echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
           echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
           echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
-  
+
       - name: Descobrir caminho do arquivo WAR
         id: descobrir_caminho
         run: |
           caminho=$(find . -name "*.war" | head -n 1)
           echo "widget_file_path=$caminho" >> $GITHUB_ENV
-      
+
       - name: Rodar upload do widget
         run: |
           python jobs/upload.py
-      
+
       - name: Renomeia branch se base_branch for main
         if: ${{ github.event.inputs.base_branch == 'main' }}
         run: |
           echo "Base branch é main. Iniciando processo de renomeação da branch..."
-      
+
           # Define nomes
-          OLD_BRANCH="fluighub-${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}"
-          NEW_BRANCH="fluighub-${{ github.event.inputs.cliente_ID }}/release/${{ env.LAST_TAG }}"
-      
+          OLD_BRANCH="fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }}"
+          NEW_BRANCH="fluighub${{ github.event.inputs.cliente_ID }}/release/${{ env.LAST_TAG }}"
+
           echo "Antiga branch: $OLD_BRANCH"
           echo "Nova branch: $NEW_BRANCH"
-      
+
           # Troca para a branch antiga (precisa existir localmente)
           git fetch origin $OLD_BRANCH
           git checkout -b "$OLD_BRANCH" origin/$OLD_BRANCH
-      
+
           # Renomeia localmente
           git branch -m "$NEW_BRANCH"
-      
+
           # Push da nova branch para o remoto
           git push origin "$NEW_BRANCH"
-      
+
           # (Opcional) Apaga a branch antiga do remoto
           # git push origin --delete "$OLD_BRANCH"
-      
+
           echo "Branch renomeada e enviada com sucesso."
-      
+
       - name: Limpar arquivos temporários
         if: always()
         run: |
