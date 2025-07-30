@@ -208,23 +208,20 @@ jobs:
 
       - name: Extrair dados do cliente
         run: |
-
-          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
-            echo '${{ secrets.SERVIDORES_HOMOLOG_JSON }}' > clientes.json
-          else
-            echo '${{ secrets.SERVIDORES_PROD_JSON }}' > clientes.json
-          fi
-
-          HOST=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].host' clientes.json)
-          PORT=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].port' clientes.json)
-          USERNAME=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].username' clientes.json)
-          PASSWORD=$(jq -r --arg id "${{ github.event.inputs.cliente_ID }}" '.[$id].password' clientes.json)
-
+          CLIENT_ID="${{ github.event.inputs.cliente_ID }}"
+          JSON='${{ secrets.SERVIDORES_HOMOLOG_JSON }}'
+      
+          HOST=$(jq -r --arg id "$CLIENT_ID" '.[$id].host' <<< "$JSON")
+          PORT=$(jq -r --arg id "$CLIENT_ID" '.[$id].port' <<< "$JSON")
+          USERNAME=$(jq -r --arg id "$CLIENT_ID" '.[$id].username' <<< "$JSON")
+          PASSWORD=$(jq -r --arg id "$CLIENT_ID" '.[$id].password' <<< "$JSON")
+      
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
-            echo "Cliente inválido ou dados incompletos: $cliente_id"
+            echo "❌ Cliente inválido ou dados incompletos: $CLIENT_ID"
             exit 1
           fi
-
+      
+          echo "✅ Dados do cliente carregados"
           echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
           echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
           echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
