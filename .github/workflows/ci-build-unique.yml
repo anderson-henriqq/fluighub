@@ -49,9 +49,14 @@ jobs:
       - name: Extrair dados do cliente diretamente da secret
         shell: bash
         run: |
+          
           CLIENT_ID="${{ github.event.inputs.cliente_ID }}"
-          JSON='${{ secrets.SERVIDORES_HOMOLOG_JSON }}'
-      
+          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+            JSON="${{ secrets.SERVIDORES_HOMOLOG_JSON }}"
+          else
+            JSON="${{ secrets.SERVIDORES_PROD_JSON }}"
+          fi
+          
           HOST=$(jq -r --arg id "$CLIENT_ID" '.[$id].host' <<< "$JSON")
           PORT=$(jq -r --arg id "$CLIENT_ID" '.[$id].port' <<< "$JSON")
           USERNAME=$(jq -r --arg id "$CLIENT_ID" '.[$id].username' <<< "$JSON")
