@@ -49,26 +49,34 @@ jobs:
       - name: Extrair dados do cliente diretamente da secret
         shell: bash
         run: |
-          
           CLIENT_ID="${{ github.event.inputs.cliente_ID }}"
-          JSON="${{ secrets.SERVIDORES_HOMOLOG_JSON }}"
-          
-          
-          HOST=$(jq -r --arg id "$CLIENT_ID" '.[$id].host' <<< "$JSON")
-          PORT=$(jq -r --arg id "$CLIENT_ID" '.[$id].port' <<< "$JSON")
-          USERNAME=$(jq -r --arg id "$CLIENT_ID" '.[$id].username' <<< "$JSON")
-          PASSWORD=$(jq -r --arg id "$CLIENT_ID" '.[$id].password' <<< "$JSON")
-      
+
+          if [ "${{ github.event.inputs.server }}" = "homologação" ]; then
+            JSON='${{ secrets.SERVIDORES_HOMOLOG_JSON }}'
+          else
+            JSON='${{ secrets.SERVIDORES_PROD_JSON }}'
+          fi
+
+          # Extrair os dados usando jq com a chave dinâmica
+          HOST=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].host')
+          PORT=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].port')
+          USERNAME=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].username')
+          PASSWORD=$(echo "$JSON" | jq -r --arg id "$CLIENT_ID" '.[$id].password')
+
+          # Verificar se algum valor retornou null
           if [ "$HOST" = "null" ] || [ "$PORT" = "null" ] || [ "$USERNAME" = "null" ] || [ "$PASSWORD" = "null" ]; then
             echo "❌ Cliente inválido ou dados incompletos: $CLIENT_ID"
             exit 1
           fi
-      
-          echo "✅ Dados do cliente carregados"
+
+          echo "✅ Dados do cliente carregados com sucesso!"
           echo "FLUIG_HOST=$HOST" >> $GITHUB_ENV
           echo "FLUIG_PORT=$PORT" >> $GITHUB_ENV
           echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
           echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+
+          
+          
 
       - name: Rodar script de login e salvar cookies
         run: |
@@ -95,7 +103,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-        #  git remote set-url origin https://x-access-token:${GH_PATH}@github.com/StrategiConsultoria/fluighub.git
+    
 
       - name: Criar branch temporária
         run: |
@@ -151,7 +159,7 @@ jobs:
           git add fluigshub/src/main/webapp/resources/config.properties
           git add fluigshub/src/main/resources/application.info
           git commit -m "Adiciona config.properties e application.info do cliente ${{ github.event.inputs.cliente_ID }}"
-          git push origin fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
+          git push fluighub${{ github.event.inputs.cliente_ID }}/${{ github.event.inputs.base_branch }} --force
 
       - name: Configurar Java 11 (OpenJDK)
         uses: actions/setup-java@v3
