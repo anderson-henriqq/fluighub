@@ -75,18 +75,15 @@ jobs:
           echo "FLUIG_USERNAME=$USERNAME" >> $GITHUB_ENV
           echo "FLUIG_PASSWORD=$PASSWORD" >> $GITHUB_ENV
 
-          
-          
+            - name: Rodar script de login e salvar cookies
+              run: |
+                python jobs/login.py
 
-      - name: Rodar script de login e salvar cookies
-        run: |
-          python jobs/login.py
-
-      - name: Salvar cookies como artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cookies
-          path: cookies.json
+            - name: Salvar cookies como artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: cookies
+                path: cookies.json
 
   build:
     runs-on: ubuntu-latest
