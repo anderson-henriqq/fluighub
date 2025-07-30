@@ -93,7 +93,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git remote set-url origin https://x-access-token:${GH_PATH}@github.com/StrategiConsultoria/fluighub.git
+        #  git remote set-url origin https://x-access-token:${GH_PATH}@github.com/StrategiConsultoria/fluighub.git
 
       - name: Criar branch temporária
         run: |
