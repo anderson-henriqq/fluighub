@@ -17,12 +17,12 @@ import java.util.Base64;
 public class Base64Controller {
 
     @POST
-    @Path("execute/encode")
-    @Produces(MediaType.APPLICATION_JSON)
+            @Path("execute/encode")
+      @Produces(MediaType.APPLICATION_JSON)
     
-    public Response execute(String jsonValues) throws IOException {
+               public Response execute(String jsonValues) throws IOException {
         if (jsonValues == null || jsonValues.isEmpty()) {
-    return Response.status(Response.Status.BAD_REQUEST).entity("JSON nulo ou vazio").build();
+    return            Response.status(Response.Status.BAD_REQUEST).entity("JSON nulo ou vazio").build();
     }
 
         GenericModel requestMessage;
