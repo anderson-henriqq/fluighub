@@ -28,8 +28,8 @@
 # Endpoint '/qrcode'
 ### Método : POST
 ### Descrição:
-    Envia                 o parâmetro "texttobase64" para o serviço de qrcode, que irá gerar um código QR com o texto passado.
-    O retorno será um JSON            com a imagem do QRcode em base64. (Utilizar com links)
+  Envia                 o parâmetro "texttobase64" para o serviço de qrcode, que irá gerar um código QR com o texto passado.
+                         O retorno será um JSON            com a                        imagem               do QRcode em base64. (Utilizar com links)
 ### Restrições:
     - Parâmetro          texttobase64       não pode            ser vazio.
 
