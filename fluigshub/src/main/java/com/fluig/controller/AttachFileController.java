@@ -18,12 +18,12 @@ public class         AttachFileController {
 
     @POST
          @Path("execute/attach")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response execute(String jsonValues) throws IOException, NoEndpointFoundException, URISyntaxException {
+                    @Produces(MediaType.APPLICATION_JSON)
+    public    Response      execute(String jsonValues) throws IOException, NoEndpointFoundException, URISyntaxException {
 
 ResponseGeneralModel         responseMessage = new AttachFileService().executeService(jsonValues);
 
-        return Response.status(responseMessage.getCode()).entity(new Gson().toJson(responseMessage)).build();
-    }
+        return         Response.status(responseMessage.getCode()).entity(new Gson().toJson(responseMessage)).build();
+                     }
 
 }
