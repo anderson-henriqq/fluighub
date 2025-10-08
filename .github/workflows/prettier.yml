@@ -1,0 +1,42 @@
+name: "Prettier Autofix"
+
+on:
+  push:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  prettier:
+    name: "Check and auto-fix formatting"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # Primeiro checa formatação, mas não falha o build
+      - name: Run Prettier check
+        run: |
+          echo "🔍 Checking code format..."
+          yarn prettier . --check || echo "⚠️ Some files need formatting"
+
+      # Depois aplica correções automaticamente
+      - name: Run Prettier fix
+        run: |
+          echo "✨ Applying Prettier fixes..."
+          yarn prettier . --write
+
+      # Faz commit automático com o autofix.ci (exceto .github)
+      - name: Commit fixes via autofix.ci
+        uses: autofix-ci/action@v1
+        with:
+          commit-message: "chore: apply Prettier format"
