@@ -26,14 +26,14 @@ jobs:
       # Primeiro checa formatação, mas não falha o build
       - name: Run Prettier check
         run: |
-          echo "🔍 Checking code format..."
-          yarn prettier . --check || echo "⚠️ Some files need formatting"
+            echo "🔍 Checking code format..."
+            yarn prettier . --check --ignore-path .prettierignore || echo "⚠️ Some files need formatting"
 
-      # Depois aplica correções automaticamente
+        # Depois aplica correções automaticamente
       - name: Run Prettier fix
         run: |
-          echo "✨ Applying Prettier fixes..."
-          yarn prettier . --write
+            echo "✨ Applying Prettier fixes..."
+            yarn prettier . --write --ignore-path .prettierignore
 
       # Faz commit automático com o autofix.ci (exceto .github)
       - name: Commit fixes via autofix.ci
