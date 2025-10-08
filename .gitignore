@@ -4,5 +4,4 @@
 # GitHub App credentials
 gha-creds-*.json
 
-#teste
-#teste
+.prettierignore
