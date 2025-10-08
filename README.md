@@ -1,25 +1,25 @@
 # Índice:
 
-- [Mudanças por versão](UtilsDoc/updateversion.md)
-- [Manutenção/Alteração](#alterando-o-fluighub)
-- [Upload FluigHub](#upload-fluighub-em-servidor)
-- [Encontrar erros a partir do Log ](#encontrar-erros-a-partir-do-log-do-servidor-fluig)
-- [Resumo StackTrace FluigHub](#resumo-stacktrace-fluighub)
-- [Endpoint '/qrcode'](#endpoint-qrcode)
-- [Endpoint '/datasearch'](#endpoint-datasearch)
-- [Endpoint '/zipfiles'](#endpoint-zipfiles)
-- [Endpoint '/movestart-process'](#endpoint-movestart-process)
-- [Endpoint '/topdf'](#endpoint-topdf)
-- [Endpoint '/crypto'](#endpoint-crypto)
-- [Endpoint '/encode'](#endpoint-encode)
-- [Endpoint '/uploadfile'](#endpoint-uploadfile)
-- [Endpoint '/folder'](#endpoint-folder)
-- [Endpoint '/mergepdf'](#endpoint-mergepdf)
-- [Endpoint '/uploadanexo'](#endpoint-uploadanexo)
-- [Endpoint '/attach'](#endpoint-attach)
-- [Endpoint '/deleteattach'](#endpoint-deleteattach)
-- [Endpoint '/version'](#endpoint-version)
-- [Endpoint '/distancia'](#endpoint-distancia)
+-   [Mudanças por versão](UtilsDoc/updateversion.md)
+-   [Manutenção/Alteração](#alterando-o-fluighub)
+-   [Upload FluigHub](#upload-fluighub-em-servidor)
+-   [Encontrar erros a partir do Log ](#encontrar-erros-a-partir-do-log-do-servidor-fluig)
+-   [Resumo StackTrace FluigHub](#resumo-stacktrace-fluighub)
+-   [Endpoint '/qrcode'](#endpoint-qrcode)
+-   [Endpoint '/datasearch'](#endpoint-datasearch)
+-   [Endpoint '/zipfiles'](#endpoint-zipfiles)
+-   [Endpoint '/movestart-process'](#endpoint-movestart-process)
+-   [Endpoint '/topdf'](#endpoint-topdf)
+-   [Endpoint '/crypto'](#endpoint-crypto)
+-   [Endpoint '/encode'](#endpoint-encode)
+-   [Endpoint '/uploadfile'](#endpoint-uploadfile)
+-   [Endpoint '/folder'](#endpoint-folder)
+-   [Endpoint '/mergepdf'](#endpoint-mergepdf)
+-   [Endpoint '/uploadanexo'](#endpoint-uploadanexo)
+-   [Endpoint '/attach'](#endpoint-attach)
+-   [Endpoint '/deleteattach'](#endpoint-deleteattach)
+-   [Endpoint '/version'](#endpoint-version)
+-   [Endpoint '/distancia'](#endpoint-distancia)
 
 ## base url: /fluighub/rest/service/execute
 
@@ -42,8 +42,8 @@ O retorno será um JSON com a imagem do QRcode em base64. (Utilizar com links)
 
 ```json
 {
-  "endpoint": "stringtoqr",
-  "texttobase64": "link_para_pagamento_do_pix"
+    "endpoint": "stringtoqr",
+    "texttobase64": "link_para_pagamento_do_pix"
 }
 ```
 
@@ -51,9 +51,9 @@ O retorno será um JSON com a imagem do QRcode em base64. (Utilizar com links)
 
 ```json
 {
-  "message": "<Imagem do QRCode em base64>",
-  "error": false,
-  "code": 200
+    "message": "<Imagem do QRCode em base64>",
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -108,9 +108,9 @@ try {
 
 ```json
 {
-  "endpoint": "dataset",
-  "method": "get",
-  "params": "datasetId=dsConsultaEventoHub"
+    "endpoint": "dataset",
+    "method": "get",
+    "params": "datasetId=dsConsultaEventoHub"
 }
 ```
 
@@ -122,9 +122,9 @@ try {
 
 ```json
 {
-  "message": "{\"columns\":[\"<nome_da_coluna_1>\",\"<nome_da_coluna_2>\"],\"values\":[<dados_do_dataset>]}",
-  "error": false,
-  "code": 200
+    "message": "{\"columns\":[\"<nome_da_coluna_1>\",\"<nome_da_coluna_2>\"],\"values\":[<dados_do_dataset>]}",
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -235,9 +235,9 @@ try {
 
 ```json
 {
-  "message": "<dados_do_documento>", //por exemplo: ID do documento, versão do documento, etc.
-  "error": false,
-  "code": 200
+    "message": "<dados_do_documento>", //por exemplo: ID do documento, versão do documento, etc.
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -324,9 +324,9 @@ const body = {
 
 ```json
 {
-  "message": "<Dados do processo>", //por exemplo: ID do processo, versão do processo, instanceId do processo, etc.
-  "error": false,
-  "code": 200
+    "message": "<Dados do processo>", //por exemplo: ID do processo, versão do processo, instanceId do processo, etc.
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -349,40 +349,34 @@ const body = {
 
 ```javascript
 function createPDF(base64, nomeArquivo, documentId, fluigId) {
-  // chama um endpoint no fluighub para gerar o pdf
+    // chama um endpoint no fluighub para gerar o pdf
 
-  let endpoint = '/fluighub/rest/service/execute/topdf';
-  let clientService = fluigAPI.getAuthorizeClientService();
-  let data = {
-    companyId: '1',
-    serviceCode: 'FLUIGHUB' + '',
-    endpoint: endpoint,
-    method: 'post',
-    timeoutService: '100',
-    options: {
-      encoding: 'UTF-8',
-      mediaType: 'application/json',
-    },
-    params: {
-      fileName: nomeArquivo + '',
-      params: base64 + '',
-    },
-  };
+    let endpoint = '/fluighub/rest/service/execute/topdf'
+    let clientService = fluigAPI.getAuthorizeClientService()
+    let data = {
+        companyId: '1',
+        serviceCode: 'FLUIGHUB' + '',
+        endpoint: endpoint,
+        method: 'post',
+        timeoutService: '100',
+        options: {
+            encoding: 'UTF-8',
+            mediaType: 'application/json'
+        },
+        params: {
+            fileName: nomeArquivo + '',
+            params: base64 + ''
+        }
+    }
 
-  try {
-    // multipart/form-data
-    // receber os bytes do pdf
-    let result = clientService.invoke(data);
-    return result.getResult().getBytes();
-  } catch (e) {
-    throw (
-      'Erro ao criar o PDF: ' +
-      fluigId +
-      ' =====> Não conseguiu se conectar ao endpoint REST do FLUIGHUB:' +
-      e +
-      ''
-    );
-  }
+    try {
+        // multipart/form-data
+        // receber os bytes do pdf
+        let result = clientService.invoke(data)
+        return result.getResult().getBytes()
+    } catch (e) {
+        throw 'Erro ao criar o PDF: ' + fluigId + ' =====> Não conseguiu se conectar ao endpoint REST do FLUIGHUB:' + e + ''
+    }
 }
 ```
 
@@ -390,11 +384,11 @@ function createPDF(base64, nomeArquivo, documentId, fluigId) {
 
 ```json
 {
-  "service": "bytes",
-  "fileName": "dados2",
-  "pathId": "136513",
-  "folderName": "retest2",
-  "params": "HTML_EM_BASE64"
+    "service": "bytes",
+    "fileName": "dados2",
+    "pathId": "136513",
+    "folderName": "retest2",
+    "params": "HTML_EM_BASE64"
 }
 ```
 
@@ -411,9 +405,9 @@ function createPDF(base64, nomeArquivo, documentId, fluigId) {
 //Caso com "bytes" será retornado somente os bytes do arquivo em multipart/form-data
 //Caso sem "bytes" no "service":
 {
-  "message": "<dados_do_documento>", //por exemplo: ID do documento, versão do documento, etc.
-  "error": false,
-  "code": 200
+    "message": "<dados_do_documento>", //por exemplo: ID do documento, versão do documento, etc.
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -466,8 +460,8 @@ try {
 
 ```json
 {
-  "endpoint": "decrypto",
-  "passphrase": "6wAIhJ/+pwpLQXlc2QVK/w=="
+    "endpoint": "decrypto",
+    "passphrase": "6wAIhJ/+pwpLQXlc2QVK/w=="
 }
 ```
 
@@ -478,9 +472,9 @@ try {
 
 ```json
 {
-  "message": "<passphrase_criptografada>",
-  "error": false,
-  "code": 200
+    "message": "<passphrase_criptografada>",
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -496,7 +490,7 @@ try {
 
 ```json
 {
-  "generic": "VALOR_PARA_ENCODAR"
+    "generic": "VALOR_PARA_ENCODAR"
 }
 ```
 
@@ -572,9 +566,9 @@ return false
 
 ```json
 {
-  "message": "<dados_do_documento>", //por exemplo: ID do documento, versão do documento, etc.
-  "error": false,
-  "code": 200
+    "message": "<dados_do_documento>", //por exemplo: ID do documento, versão do documento, etc.
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -626,8 +620,8 @@ try {
 
 ```json
 {
-  "foldername": "AM",
-  "pathId": "136557"
+    "foldername": "AM",
+    "pathId": "136557"
 }
 ```
 
@@ -638,9 +632,9 @@ try {
 
 ```json
 {
-  "message": "<Id_da_pasta_criada_no_GED>",
-  "error": false,
-  "code": 200
+    "message": "<Id_da_pasta_criada_no_GED>",
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -740,9 +734,9 @@ try {
 
 ```json
 {
-  "message": "{\"content\":\"OK\",\"message\":{\"message\":\"OK\",\"detail\":\"OK\",\"type\":\"INFO\",\"errorCode\":null}}",
-  "error": false,
-  "code": 200
+    "message": "{\"content\":\"OK\",\"message\":{\"message\":\"OK\",\"detail\":\"OK\",\"type\":\"INFO\",\"errorCode\":null}}",
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -767,29 +761,29 @@ try {
 
 ```json
 {
-  "processId": null,
-  "version": -1,
-  "managerMode": false,
-  "taskUserId": "ID_DO_USUARIO_FLUIG", //exemplo: luis.silva
-  "processInstanceId": 32811,
-  "isDigitalSigned": false,
-  "selectedState": null,
-  "attachments": [
-    {
-      "name": "exemplo.pdf",
-      "newAttach": true,
-      "description": "NOME_DO_ARQUIVO.pdf",
-      "documentId": 0,
-      "attachedUser": "Italo Almeida",
-      "attachments": [
+    "processId": null,
+    "version": -1,
+    "managerMode": false,
+    "taskUserId": "ID_DO_USUARIO_FLUIG", //exemplo: luis.silva
+    "processInstanceId": 32811,
+    "isDigitalSigned": false,
+    "selectedState": null,
+    "attachments": [
         {
-          "principal": true,
-          "fileName": "exemplo.pdf"
+            "name": "exemplo.pdf",
+            "newAttach": true,
+            "description": "NOME_DO_ARQUIVO.pdf",
+            "documentId": 0,
+            "attachedUser": "Italo Almeida",
+            "attachments": [
+                {
+                    "principal": true,
+                    "fileName": "exemplo.pdf"
+                }
+            ]
         }
-      ]
-    }
-  ],
-  "currentMovto": null
+    ],
+    "currentMovto": null
 }
 ```
 
@@ -797,9 +791,9 @@ try {
 
 ```json
 {
-  "message": "<dados_do_anexo>", //por exemplo: documentId do anexo, processoInstanceId do processo que foi anexado, etc.
-  "error": false,
-  "code": 200
+    "message": "<dados_do_anexo>", //por exemplo: documentId do anexo, processoInstanceId do processo que foi anexado, etc.
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -851,9 +845,9 @@ try {
 
 ```json
 {
-  "message": "<dados_do_anexo>", //por exemplo: documentId do anexo, processoInstanceId do processo que foi anexado, etc.
-  "error": false,
-  "code": 200
+    "message": "<dados_do_anexo>", //por exemplo: documentId do anexo, processoInstanceId do processo que foi anexado, etc.
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -869,8 +863,8 @@ try {
 
 ```json
 {
-  "name": "<nome_do_servidor>",
-  "date": "2024-08-09 11:49:52"
+    "name": "<nome_do_servidor>",
+    "date": "2024-08-09 11:49:52"
 }
 ```
 
@@ -886,12 +880,12 @@ try {
 
 ```json
 {
-  "data": [
-    {
-      "origem": "Natal, RN",
-      "destino": "Extremoz, RN"
-    }
-  ]
+    "data": [
+        {
+            "origem": "Natal, RN",
+            "destino": "Extremoz, RN"
+        }
+    ]
 }
 ```
 
@@ -903,15 +897,15 @@ try {
 
 ```json
 {
-  "data": [
-    {
-      "origem": "Natal, RN",
-      "destino": "Extremoz, RN",
-      "distancia": 21.905
-    }
-  ],
-  "error": false,
-  "code": 200
+    "data": [
+        {
+            "origem": "Natal, RN",
+            "destino": "Extremoz, RN",
+            "distancia": 21.905
+        }
+    ],
+    "error": false,
+    "code": 200
 }
 ```
 
@@ -927,8 +921,8 @@ try {
 
 ```json
 {
-  "name": "<nome_do_servidor>",
-  "date": "2024-08-09 11:49:52"
+    "name": "<nome_do_servidor>",
+    "date": "2024-08-09 11:49:52"
 }
 ```
 
@@ -1075,11 +1069,11 @@ Onde são colocados os parâmetros de configuração do serviço FluigHub, que f
 
 ## 📚 Sumário
 
-- [Resumo](#resumo)
-- [Como Adicionar um Novo Cliente](#como-adicionar-um-novo-cliente)
-- [🔐 Como adicionar as Secrets no repositório](#como-adicionar-as-secrets-no-repositório)
-  - [ Secrets obrigatórias](#secrets-obrigatórias)
-  - [ Formato esperado das credenciais](#formato-esperado-das-credenciais)
+-   [Resumo](#resumo)
+-   [Como Adicionar um Novo Cliente](#como-adicionar-um-novo-cliente)
+-   [🔐 Como adicionar as Secrets no repositório](#como-adicionar-as-secrets-no-repositório)
+    -   [ Secrets obrigatórias](#secrets-obrigatórias)
+    -   [ Formato esperado das credenciais](#formato-esperado-das-credenciais)
 
 ## Resumo
 
@@ -1107,18 +1101,18 @@ Todas as duas variáveis (`SERVIDORES_HOMOLOG_JSON` e `SERVIDORES_PROD_JSON`) de
 
 ```json
 {
-  "strategi": {
-    "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
-    "port": "2450",
-    "username": "admin",
-    "password": "lcsVHVGR1IGwRQrj"
-  },
-  "sebraern": {
-    "host": "fluighml.rn.sebrae.com.br",
-    "port": "443",
-    "username": "anderson.santos",
-    "password": "123456"
-  }
+    "strategi": {
+        "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
+        "port": "2450",
+        "username": "admin",
+        "password": "lcsVHVGR1IGwRQrj"
+    },
+    "sebraern": {
+        "host": "fluighml.rn.sebrae.com.br",
+        "port": "443",
+        "username": "anderson.santos",
+        "password": "123456"
+    }
 }
 ```
 
@@ -1132,11 +1126,11 @@ Todas as duas variáveis (`SERVIDORES_HOMOLOG_JSON` e `SERVIDORES_PROD_JSON`) de
 2. Vá em **Developer settings** > **Personal access tokens** > **Tokens (classic)**.
 3. Clique em **Generate new token (classic)**.
 4. Configure o token:
-   - **Note**: `fluighub-token` (ou outro nome identificável)
-   - **Expiration**: escolha um tempo ou deixe padrão
-   - **Scopes**: selecione:
-     - `repo` (acesso total ao repositório)
-     - `workflow` (acesso à execução e leitura de workflows)
+    - **Note**: `fluighub-token` (ou outro nome identificável)
+    - **Expiration**: escolha um tempo ou deixe padrão
+    - **Scopes**: selecione:
+        - `repo` (acesso total ao repositório)
+        - `workflow` (acesso à execução e leitura de workflows)
 5. Clique em **Generate token**.
 6. Copie o token gerado **imediatamente** (ele não será mostrado novamente).
 
@@ -1147,9 +1141,9 @@ Todas as duas variáveis (`SERVIDORES_HOMOLOG_JSON` e `SERVIDORES_PROD_JSON`) de
 1. Acesse seu repositório no GitHub.
 2. Vá até **Settings** > **Secrets and variables** > **Actions**.
 3. Clique em **New repository secret** para cada variável:
-   - `SERVIDORES_HOMOLOG_JSON`
-   - `SERVIDORES_PROD_JSON`
-   - `GH_PATH`
+    - `SERVIDORES_HOMOLOG_JSON`
+    - `SERVIDORES_PROD_JSON`
+    - `GH_PATH`
 4. Preencha o **Name** com o nome da variável e o **Value** com o conteúdo apropriado.
 5. Clique em **Add secret**.
 
@@ -1161,93 +1155,93 @@ Para adicionar um novo cliente ao projeto, siga os passos abaixo:
    Crie dois arquivos no formato `.properties`, um para o ambiente de homologação e outro para o ambiente de produção.  
    A convenção de nomenclatura deve seguir este padrão:
 
-   ```
-   fluighub{cliente_ID}-{ambiente}.properties
-   ```
+    ```
+    fluighub{cliente_ID}-{ambiente}.properties
+    ```
 
-   - Use `hml` para o ambiente de homologação.
-   - Use `prod` para o ambiente de produção.
+    - Use `hml` para o ambiente de homologação.
+    - Use `prod` para o ambiente de produção.
 
-   **Exemplo:**
+    **Exemplo:**
 
-   - `fluighubsebraern-hml.properties`
-   - `fluighubsebraern-prod.properties`
+    - `fluighubsebraern-hml.properties`
+    - `fluighubsebraern-prod.properties`
 
 2. **Adicionar as credenciais do cliente nas variáveis secretas do repositório**
 
-   - Edite o conteúdo da variável `SERVIDORES_HOMOLOG_JSON` no repositório e adicione as credenciais de **homologação** do novo cliente, seguindo o formato:
+    - Edite o conteúdo da variável `SERVIDORES_HOMOLOG_JSON` no repositório e adicione as credenciais de **homologação** do novo cliente, seguindo o formato:
 
-     ```json
-     {
-       "cliente_id": {
-         "host": "host_do_servidor",
-         "port": "porta",
-         "username": "usuario",
-         "password": "senha"
-       }
-     }
-     ```
+        ```json
+        {
+            "cliente_id": {
+                "host": "host_do_servidor",
+                "port": "porta",
+                "username": "usuario",
+                "password": "senha"
+            }
+        }
+        ```
 
-   - Faça o mesmo com a variável `SERVIDORES_PROD_JSON`, adicionando as credenciais de **produção** do cliente.
+    - Faça o mesmo com a variável `SERVIDORES_PROD_JSON`, adicionando as credenciais de **produção** do cliente.
 
-   As variáveis devem conter **um único JSON válido em uma única linha**, sem formatação ou identação.
+    As variáveis devem conter **um único JSON válido em uma única linha**, sem formatação ou identação.
 
-   **Exemplo com dois clientes:**
+    **Exemplo com dois clientes:**
 
-   ```json
-   {
-     "strategi": {
-       "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
-       "port": "2450",
-       "username": "admin",
-       "password": "lcsVHVGR1IGwRQrj"
-     },
-     "sebraern": {
-       "host": "fluighml.rn.sebrae.com.br",
-       "port": "443",
-       "username": "anderson.santos",
-       "password": "123456"
-     }
-   }
-   ```
+    ```json
+    {
+        "strategi": {
+            "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
+            "port": "2450",
+            "username": "admin",
+            "password": "lcsVHVGR1IGwRQrj"
+        },
+        "sebraern": {
+            "host": "fluighml.rn.sebrae.com.br",
+            "port": "443",
+            "username": "anderson.santos",
+            "password": "123456"
+        }
+    }
+    ```
 
 3. **Adicionar o cliente no workflow do GitHub Actions**
 
-   - Abra o arquivo `.github/workflows/ci-build-unique.yml`
-   - No campo `inputs > cliente_ID > options`, adicione o ID do novo cliente como opção
+    - Abra o arquivo `.github/workflows/ci-build-unique.yml`
+    - No campo `inputs > cliente_ID > options`, adicione o ID do novo cliente como opção
 
-     ```yaml
-     cliente_ID:
-       description: 'ID do cliente (mesmo cliente_ID usado para criar o .properties)'
-       required: true
-       type: choice
-       options:
-         - sebreaam
-         - sebraern
-         - doisa
-         - strategi
-         - elastri
-         - novocliente # Adicione essa linha com o novo cliente
-     ```
+        ```yaml
+        cliente_ID:
+            description: 'ID do cliente (mesmo cliente_ID usado para criar o .properties)'
+            required: true
+            type: choice
+            options:
+                - sebreaam
+                - sebraern
+                - doisa
+                - strategi
+                - elastri
+                - novocliente # Adicione essa linha com o novo cliente
+        ```
 
-   **Exemplo com dois clientes:**
+    **Exemplo com dois clientes:**
 
-   ```json
-   {
-     "strategi": {
-       "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
-       "port": "2450",
-       "username": "admin",
-       "password": "lcsVHVGR1IGwRQrj"
-     },
-     "sebraern": {
-       "host": "fluighml.rn.sebrae.com.br",
-       "port": "443",
-       "username": "anderson.santos",
-       "password": "123456"
-     }
-   }
-   ```
+    ```json
+    {
+        "strategi": {
+            "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
+            "port": "2450",
+            "username": "admin",
+            "password": "lcsVHVGR1IGwRQrj"
+        },
+        "sebraern": {
+            "host": "fluighml.rn.sebrae.com.br",
+            "port": "443",
+            "username": "anderson.santos",
+            "password": "123456"
+        }
+    }
+    ```
 
 > ⚠️ Certifique-se de manter o conteúdo das variáveis em formato JSON válido. Cada cliente deve ter uma chave com seu ID e o objeto contendo as credenciais.
 
@@ -1273,46 +1267,46 @@ Para adicionar um novo cliente ao projeto, siga os passos abaixo:
 
 Para o correto funcionamento do projeto, é necessário configurar duas variáveis secretas no repositório:
 
-- `**SERVIDORES_HOMOLOG_JSON**`: Contém as credenciais de acesso aos servidores de **homologação**.
-- `**SERVIDORES_PROD_JSON**`: Contém as credenciais de acesso aos servidores de **produção**.
+-   `**SERVIDORES_HOMOLOG_JSON**`: Contém as credenciais de acesso aos servidores de **homologação**.
+-   `**SERVIDORES_PROD_JSON**`: Contém as credenciais de acesso aos servidores de **produção**.
 
 Ambas devem seguir o seguinte padrão de conteúdo, inserido como **string JSON em uma única linha, sem identação**:
 
 ```json
 {
-  "strategi": {
-    "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
-    "port": "2450",
-    "username": "admin",
-    "password": "lcsVHVGR1IGwRQrj"
-  },
-  "sebraern": {
-    "host": "fluighml.rn.sebrae.com.br",
-    "port": "443",
-    "username": "anderson.santos",
-    "password": "123456"
-  }
+    "strategi": {
+        "host": "strategiconsultoria176588.fluig.cloudtotvs.com.br",
+        "port": "2450",
+        "username": "admin",
+        "password": "lcsVHVGR1IGwRQrj"
+    },
+    "sebraern": {
+        "host": "fluighml.rn.sebrae.com.br",
+        "port": "443",
+        "username": "anderson.santos",
+        "password": "123456"
+    }
 }
 ```
 
 ### Arquivos de Configuração
 
-- **Arquivos `.properties`** devem seguir a convenção:  
-  `fluighub{cliente_ID}-{ambiente(hml ou prod}.properties`  
-  Exemplo: `fluighubsebraern-hml.properties`
+-   **Arquivos `.properties`** devem seguir a convenção:  
+    `fluighub{cliente_ID}-{ambiente(hml ou prod}.properties`  
+    Exemplo: `fluighubsebraern-hml.properties`
 
-- **application.info** é recriado dinamicamente com base no cliente e versão da tag.
+-   **application.info** é recriado dinamicamente com base no cliente e versão da tag.
 
 ### Variáveis de Ambiente e Branches
 
-- **Variáveis esperadas**:
+-   **Variáveis esperadas**:
 
-  - `FLUIG_HOST`, `FLUIG_PORT`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`
-  - `LAST_TAG`: versão da aplicação baseada na última tag Git.
+    -   `FLUIG_HOST`, `FLUIG_PORT`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`
+    -   `LAST_TAG`: versão da aplicação baseada na última tag Git.
 
-- **Branches**:
-  - O workflow cria uma branch temporária baseada na opção `base_branch`.
-  - Nome da branch segue o padrão: `fluighub-{cliente_ID}/{base_branch}`
+-   **Branches**:
+    -   O workflow cria uma branch temporária baseada na opção `base_branch`.
+    -   Nome da branch segue o padrão: `fluighub-{cliente_ID}/{base_branch}`
 
 ---
 
@@ -1320,26 +1314,26 @@ Ambas devem seguir o seguinte padrão de conteúdo, inserido como **string JSON 
 
 ### 1. `login_fluig`
 
-- **Objetivo**: Realiza login no servidor Fluig e salva cookies.
-- **Ferramentas usadas**: Python (`login.py`), `jq`, variáveis secretas do GitHub.
+-   **Objetivo**: Realiza login no servidor Fluig e salva cookies.
+-   **Ferramentas usadas**: Python (`login.py`), `jq`, variáveis secretas do GitHub.
 
 ### 2. `build`
 
-- **Objetivo**: Compilar a aplicação com Maven e gerar o artefato `.war`.
-- **Etapas**:
-  - Criação da branch temporária.
-  - Cópia do `.properties` correspondente.
-  - Geração do `application.info`.
-  - Compilação com `mvn clean install`.
-- **Ferramentas usadas**: Maven, Java 11 (Temurin).
+-   **Objetivo**: Compilar a aplicação com Maven e gerar o artefato `.war`.
+-   **Etapas**:
+    -   Criação da branch temporária.
+    -   Cópia do `.properties` correspondente.
+    -   Geração do `application.info`.
+    -   Compilação com `mvn clean install`.
+-   **Ferramentas usadas**: Maven, Java 11 (Temurin).
 
 ### 3. `deploy`
 
-- **Objetivo**: Envia o `.war` gerado para o servidor Fluig.
-- **Etapas**:
-  - Leitura da versão.
-  - Download dos artefatos (`.war` e cookies).
-  - Envio via script Python (presumidamente `upload.py` ou via REST no `login.py`).
+-   **Objetivo**: Envia o `.war` gerado para o servidor Fluig.
+-   **Etapas**:
+    -   Leitura da versão.
+    -   Download dos artefatos (`.war` e cookies).
+    -   Envio via script Python (presumidamente `upload.py` ou via REST no `login.py`).
 
 ---
 
@@ -1347,20 +1341,20 @@ Ambas devem seguir o seguinte padrão de conteúdo, inserido como **string JSON 
 
 ### Modo de Publicação
 
-- **Via HTTP/REST**, utilizando cookies obtidos no login e parâmetros como:
-  - `FLUIG_HOST`, `FLUIG_PORT`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`
-- Os dados vêm de JSONs secretos no GitHub: `SERVIDORES_HOMOLOG_JSON`, `SERVIDORES_PROD_JSON`.
+-   **Via HTTP/REST**, utilizando cookies obtidos no login e parâmetros como:
+    -   `FLUIG_HOST`, `FLUIG_PORT`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`
+-   Os dados vêm de JSONs secretos no GitHub: `SERVIDORES_HOMOLOG_JSON`, `SERVIDORES_PROD_JSON`.
 
 ### Parâmetros de Configuração
 
 ```json
 {
-  "sebraern": {
-    "host": "fluig.sebraern.org.br",
-    "port": "8080",
-    "username": "admin",
-    "password": "senha123"
-  }
+    "sebraern": {
+        "host": "fluig.sebraern.org.br",
+        "port": "8080",
+        "username": "admin",
+        "password": "senha123"
+    }
 }
 ```
 
@@ -1373,17 +1367,17 @@ Ambas devem seguir o seguinte padrão de conteúdo, inserido como **string JSON 
 ```yaml
 name: Deploy Homolog Unique
 on:
-  workflow_dispatch:
-    inputs:
-      server:
-        type: choice
-        options: [homologação, produção]
-      base_branch:
-        type: choice
-        options: [main, release/v3.0.0, ...]
-      cliente_ID:
-        type: choice
-        options: [sebreaam, sebraern, doisa, strategi, elastri]
+    workflow_dispatch:
+        inputs:
+            server:
+                type: choice
+                options: [homologação, produção]
+            base_branch:
+                type: choice
+                options: [main, release/v3.0.0, ...]
+            cliente_ID:
+                type: choice
+                options: [sebreaam, sebraern, doisa, strategi, elastri]
 ```
 
 ### Exemplo `.properties` (fluighubsebraern-hml.properties)

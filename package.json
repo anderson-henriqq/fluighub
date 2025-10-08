@@ -1,12 +1,12 @@
 {
-  "name": "fluighub",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "format": "prettier . --write",
-    "check-format": "prettier . --check"
-  },
-  "devDependencies": {
-    "prettier": "3.2.5"
-  }
+    "name": "fluighub",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "format": "prettier . --write",
+        "check-format": "prettier . --check"
+    },
+    "devDependencies": {
+        "prettier": "3.2.5"
+    }
 }
