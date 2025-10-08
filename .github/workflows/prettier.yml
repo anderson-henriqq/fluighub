@@ -26,19 +26,23 @@ jobs:
       # Primeiro checa formatação, mas não falha o build
       - name: Run Prettier check
         run: |
-            echo "🔍 Checking code format..."
-            yarn prettier . --check --ignore-path .prettierignore || echo "⚠️ Some files need formatting"
+          echo "Checking code format..."
+          # Rodar Prettier apenas nos arquivos de código, excluindo .github
+          yarn prettier "**/*.{js,json,ts,tsx,md,java}" "!**/.github/**" --check || echo " Some files need formatting"
 
-        # Depois aplica correções automaticamente
+      # Depois aplica correções automaticamente
       - name: Run Prettier fix
         run: |
-            echo "✨ Applying Prettier fixes..."
-            yarn prettier . --write --ignore-path .prettierignore --ignore "**/.github/**"
+          echo "Applying Prettier fixes..."
+          yarn prettier "**/*.{js,json,ts,tsx,md,java}" "!**/.github/**" --write
 
-
-      # Faz commit automático com o autofix.ci (exceto .github)
+      # Faz commit automático com o autofix.ci, apenas em pastas seguras
       - name: Commit fixes via autofix.ci
         uses: autofix-ci/action@v1
         with:
           commit-message: "chore: apply Prettier format"
-
+          paths: |
+            cypress/
+            package.json
+            README.md
+            .prettierrc
