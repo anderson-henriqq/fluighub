@@ -34,7 +34,7 @@ jobs:
       - name: Run Prettier fix
         run: |
           echo "Applying Prettier fixes..."
-          yarn prettier "**/*.{js,json,ts,tsx,md,css,html}" "!**/.github/**" --write
+          yarn prettier "**/*.{js,json,ts,tsx,md,css, html}" "!**/.github/**" --write
 
       # Faz commit automático com o autofix.ci, apenas em pastas seguras
       - name: Commit fixes via autofix.ci
