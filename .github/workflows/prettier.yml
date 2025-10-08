@@ -40,5 +40,10 @@ jobs:
       - name: Commit fixes via autofix.ci
         uses: autofix-ci/action@v1
         with:
-          commit-message: "chore: apply Prettier format"
+            commit-message: "chore: apply Prettier format"
+            paths: |
+                cypress/
+                package.json
+                README.md
+                .prettierrc
 
